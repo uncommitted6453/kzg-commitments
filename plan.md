@@ -27,6 +27,23 @@ testing security properties should be done in cryptanalysis
   - merkle tree
   - how is it different to KZG? (performance in speed,space,security)
 
+# Optimization
+
+- some optimizations noted in the paper
+  - reuse the shared pk over multiple commitments
+  - parallelize generating each exponention component
+  - use fast exponentation techniques instead of naive implementation
+  - precompute e(C,g) and e(g,g) during verification
+
+- encode multiple words into a single polynomial value
+  - note that the order of the curve is extremely large
+  - then a very large number can encode multiple ascii characters
+  - then the polynomial degree doesn't need to be as high
+- when calculating powers of g, i think we can reuse previous results
+  - e.g. g^10 = g^(7 + 3) = g^7 * g^3
+  - TODO: verify the mathematical validity of this, esp over elliptic curves.
+  - we may combine this with parallelization for very large powers.
+
 # Further Research
 
 - [Formal Verification of KZG scheme](https://fcs-workshop.github.io/fcs2024/papers/FCS_Rothmann_Kreuzer.pdf)
