@@ -30,3 +30,5 @@ testing security properties should be done in cryptanalysis
 # Further Research
 
 - [Formal Verification of KZG scheme](https://fcs-workshop.github.io/fcs2024/papers/FCS_Rothmann_Kreuzer.pdf)
+- [PBC library](https://crypto.stanford.edu/pbc/)
+- [MIRACL Core](https://github.com/miracl/core)
