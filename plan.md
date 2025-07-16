@@ -39,10 +39,11 @@ testing security properties should be done in cryptanalysis
   - note that the order of the curve is extremely large
   - then a very large number can encode multiple ascii characters
   - then the polynomial degree doesn't need to be as high
-- when calculating powers of g, i think we can reuse previous results
+- when calculating powers of g for the trusted setup, i think we can reuse previous results
   - e.g. g^10 = g^(7 + 3) = g^7 * g^3
   - TODO: verify the mathematical validity of this, esp over elliptic curves.
   - we may combine this with parallelization for very large powers.
+  - \*\* the paper mentions using fast exponention when computing the polynomial not sure if this is the exact same concept, we're using apporach since the trusted setup requires all powers of g to be stored.
 
 # Further Research
 
