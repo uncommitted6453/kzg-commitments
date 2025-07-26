@@ -6,23 +6,40 @@
 using namespace std;
 using namespace NTL;
 
-int main() {
-  KZG kzg(32);
+int main(int argc, char *argv[]) {
+  /* ----- setup ------ */
+  string data = "hello there my name is bob";
+  KZG kzg(data.size());
   
-  vector<int> data = { 11, 4, 2, 7, 1, 10 };
-  vector<pair<ZZ_p, ZZ_p>> points = enumerate(data);
+  /* ----- commit ------ */
+  vector<pair<ZZ_p, ZZ_p>> points;
+  create_points_from_string(points, data, 0);
   ZZ_pX P = polyfit(points);
-  
   ECP commit = kzg.commit(P);
   
-  vector<int> X = { 1, 2 };
-  ECP proof = kzg.create_proof(P, X);
+  /* ----- create proof------ */
+  ECP hello_proof = kzg.create_proof(P, 0, strlen("hello"));
+  ECP name_proof = kzg.create_proof(P, strlen("hello there my "), strlen("name is"));
+  ECP bob_proof = kzg.create_proof(P, strlen("hello there my name is "), strlen("bob"));
   
-  vector<pair<ZZ_p, ZZ_p>> verify = {
-    { conv<ZZ_p>(1), eval(P, conv<ZZ_p>(1)) },
-    { conv<ZZ_p>(2), eval(P, conv<ZZ_p>(2) }
-  };
-  cout << kzg.verify(commit, proof, verify) << endl;
+  /* ------ verify ------- */
+  vector<pair<ZZ_p, ZZ_p>> verify;
+  
+  create_points_from_string(verify, "hello", 0);
+  if (kzg.verify(commit, hello_proof, verify)) cout << "verified: hello" << endl;
+  verify.clear();
+  
+  create_points_from_string(verify, "name is", strlen("hello there my "));
+  if (kzg.verify(commit, name_proof, verify)) cout << "verified: name is" << endl;
+  verify.clear();
+  
+  create_points_from_string(verify, "bob", strlen("hello there my name is "));
+  if (kzg.verify(commit, bob_proof, verify)) cout << "verified: bob" << endl;
+  verify.clear();
+  
+  create_points_from_string(verify, "alice", strlen("hello there my name is "));
+  if (!kzg.verify(commit, bob_proof, verify)) cout << "verified: not alice" << endl;
+  verify.clear();
   
   return 0;
 }

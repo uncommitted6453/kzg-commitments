@@ -85,11 +85,18 @@ ECP2 KZG::polyeval_G2(const ZZ_pX& P) {
   return res;
 }
 
-ECP KZG::create_proof(const ZZ_pX &P, vector<int>& X) {
-  vector<pair<ZZ_p, ZZ_p>> points = evaluate_at(P, X);
+ECP KZG::create_proof(const ZZ_pX &P, int offset, int length) {
+  vector<pair<ZZ_p, ZZ_p>> points;
+  
+  for (int i = offset; i < offset + length; i++) {
+    ZZ_p ZZ_x, ZZ_y;
+    ZZ_x = i;
+    ZZ_y = eval(P, ZZ_x);
+    points.push_back({ ZZ_x, ZZ_y });
+  }
+  
   ZZ_pX I = polyfit(points);
   ZZ_pX Z = from_linear_roots(points);
-  
   ZZ_pX q = (P - I) / Z;
   
   return polyeval_G1(q);

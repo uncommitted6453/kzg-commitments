@@ -64,19 +64,6 @@ ZZ_pX polyfit(vector<pair<ZZ_p, ZZ_p>>& points) {
   return P;
 }
 
-vector<pair<ZZ_p, ZZ_p>> enumerate(vector<int>& values) {
-  vector<pair<ZZ_p, ZZ_p>> points;
-  
-  for (int i = 0; i < values.size(); i++) {
-    ZZ_p x, y;
-    x = i;
-    y = values[i];
-    points.push_back({ x, y });
-  }
-  
-  return points;
-}
-
 ZZ_pX from_linear_roots(vector<pair<ZZ_p, ZZ_p>>& points) {
   ZZ_pX Z;
   SetCoeff(Z, 0, 1);
@@ -91,15 +78,11 @@ ZZ_pX from_linear_roots(vector<pair<ZZ_p, ZZ_p>>& points) {
   return Z;
 }
 
-vector<pair<ZZ_p, ZZ_p>> evaluate_at(const ZZ_pX& P, vector<int>& data) {
-  vector<pair<ZZ_p, ZZ_p>> points;
-  
-  for (int x : data) {
+extern void create_points_from_string(vector<pair<ZZ_p, ZZ_p>>& res, string data, int offset) {
+  for (int i = 0; i < data.size(); i++) {
     ZZ_p ZZ_x, ZZ_y;
-    ZZ_x = x;
-    ZZ_y = eval(P, ZZ_x);
-    points.push_back({ ZZ_x, ZZ_y });
+    ZZ_x = i + offset;
+    ZZ_y = data[i];
+    res.push_back({ ZZ_x, ZZ_y });
   }
-  
-  return points;
 }

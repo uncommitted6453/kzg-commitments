@@ -22,7 +22,7 @@ public:
   KZG(int num_coeff);
   
   ECP commit(const ZZ_pX& P);
-  ECP create_proof(const ZZ_pX &P, vector<int>& x);
+  ECP create_proof(const ZZ_pX &P, int offset, int length);
   bool verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
 };
 
