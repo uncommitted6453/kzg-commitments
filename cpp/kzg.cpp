@@ -1,6 +1,5 @@
 #include "kzg.h"
 
-#include <fp_BN158.h>
 #include <fp12_BN158.h>
 #include <pair_BN158.h>
 #include <big_B160_56.h>
@@ -15,18 +14,17 @@ KZG::KZG(int num_coeff) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
-  FP secret;
-  FP_from_int(&secret, 42);
+  ZZ_p s;
+  s = 42;
   
   BIG BIG_i;
   BIG_zero(BIG_i);
   
   for (int i = 0; i < num_coeff; i++) {
-    FP s_i;
-    BIG BIG_s_i;
+    ZZ_p s_i = power(s, i);
     
-    FP_pow(&s_i, &secret, BIG_i);
-    FP_redc(BIG_s_i, &s_i);
+    BIG BIG_s_i;
+    BIG_from_ZZ(BIG_s_i, rep(s_i));
     
     ECP G1_s_i;
     ECP_generator(&G1_s_i);

@@ -13,9 +13,9 @@ void BIG_from_ZZ(BIG big, const ZZ& value) {
   int a = 0;
   int b = MODBYTES_B160_56 - 1;
   
-  do
-    swap<unsigned char>(data[a], data[b]);
-  while (a++ < b--);
+  while (a < b) {
+    swap<unsigned char>(data[a++], data[b--]);
+  }
   
   BIG_fromBytesLen(big, (char*) data, MODBYTES_B160_56);
 }
@@ -27,9 +27,9 @@ ZZ ZZ_from_BIG(const BIG big) {
   int a = 0;
   int b = MODBYTES_B160_56 - 1;
   
-  do
-    swap<unsigned char>(data[a], data[b]);
-  while (a++ < b--);
+  while (a < b) {
+    swap<unsigned char>(data[a++], data[b--]);
+  }
   
   ZZ res;
   ZZFromBytes(res, data, MODBYTES_B160_56);
