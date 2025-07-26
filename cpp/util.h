@@ -12,6 +12,8 @@ using namespace NTL;
 extern void BIG_from_ZZ(BIG big, const ZZ& value);
 extern ZZ ZZ_from_BIG(const BIG big);
 extern ZZ_pX polyfit(vector<pair<ZZ_p, ZZ_p>>& points);
+extern ZZ_pX from_linear_roots(vector<pair<ZZ_p, ZZ_p>>& points);
+extern vector<pair<ZZ_p, ZZ_p>> evaluate_at(const ZZ_pX& P, vector<int>& data);
 extern vector<pair<ZZ_p, ZZ_p>> enumerate(vector<int>& data);
 
 #endif

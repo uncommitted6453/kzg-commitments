@@ -76,3 +76,30 @@ vector<pair<ZZ_p, ZZ_p>> enumerate(vector<int>& values) {
   
   return points;
 }
+
+ZZ_pX from_linear_roots(vector<pair<ZZ_p, ZZ_p>>& points) {
+  ZZ_pX Z;
+  SetCoeff(Z, 0, 1);
+  
+  for (const pair<ZZ_p, ZZ_p>& point : points) {
+    ZZ_pX factor;
+    SetCoeff(factor, 0, -point.first);
+    SetCoeff(factor, 1, 1);
+    Z *= factor;
+  }
+  
+  return Z;
+}
+
+vector<pair<ZZ_p, ZZ_p>> evaluate_at(const ZZ_pX& P, vector<int>& data) {
+  vector<pair<ZZ_p, ZZ_p>> points;
+  
+  for (int x : data) {
+    ZZ_p ZZ_x, ZZ_y;
+    ZZ_x = x;
+    ZZ_y = eval(P, ZZ_x);
+    points.push_back({ ZZ_x, ZZ_y });
+  }
+  
+  return points;
+}

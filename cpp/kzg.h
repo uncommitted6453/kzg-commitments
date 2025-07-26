@@ -22,12 +22,8 @@ public:
   KZG(int num_coeff);
   
   ECP commit(const ZZ_pX& P);
-  
-  ECP multi_proof(const ZZ_pX &P, vector<int>& x);
-  void multi_verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
-  
-  ECP single_proof(const ZZ_pX &P, const ZZ_p& x);
-  void single_verify(ECP& commit, ECP& proof, const ZZ_p& x, const ZZ_p& y);
+  ECP create_proof(const ZZ_pX &P, vector<int>& x);
+  bool verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
 };
 
 #endif
