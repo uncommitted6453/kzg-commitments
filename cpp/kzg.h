@@ -6,6 +6,7 @@
 #include <ecp2_BN158.h>
 #include <NTL/ZZX.h>
 
+using namespace std;
 using namespace BN158;
 using namespace NTL;
 
@@ -21,6 +22,10 @@ public:
   KZG(int num_coeff);
   
   ECP commit(const ZZ_pX& P);
+  
+  ECP multi_proof(const ZZ_pX &P, vector<int>& x);
+  void multi_verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
+  
   ECP single_proof(const ZZ_pX &P, const ZZ_p& x);
   void single_verify(ECP& commit, ECP& proof, const ZZ_p& x, const ZZ_p& y);
 };
