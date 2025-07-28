@@ -3,5 +3,16 @@
 run: kzg
 	./kzg
 
-kzg: *.cpp
-	g++ *.cpp ../core/cpp/core.a -I../core/cpp -lntl -lgmp -o kzg
+kzg: src/*.cpp miracl-core/cpp/core.a ntl/src/ntl.a
+	g++ src/*.cpp miracl-core/cpp/core.a ntl/src/ntl.a -Intl/include -Imiracl-core/cpp -lgmp -o kzg
+
+miracl-core/cpp/core.a:
+	cd miracl-core/cpp
+	python config64.py -o 41
+	cd ../..
+
+ntl/src/ntl.a:
+	cd ntl/src
+	./configure
+	make
+	cd ../..
