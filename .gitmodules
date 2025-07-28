@@ -1,0 +1,6 @@
+[submodule "cpp/ntl"]
+	path = cpp/ntl
+	url = https://github.com/libntl/ntl.git
+[submodule "cpp/miracl-core"]
+	path = cpp/miracl-core
+	url = https://github.com/miracl/core.git
