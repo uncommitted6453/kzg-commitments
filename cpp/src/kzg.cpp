@@ -46,6 +46,9 @@ KZG::KZG(const std::string& filename) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
+  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
+  constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_B160_56 + 1;
+  
   std::ifstream file(filename, std::ios::in | std::ios::binary);
   if (!file.is_open()) {
     std::cerr << "failed to import" << std::endl;
@@ -62,10 +65,10 @@ KZG::KZG(const std::string& filename) {
     uint32_t len;
     file.read(reinterpret_cast<char*>(&len), sizeof(len));
     
-    char buffer[64];
+    char buffer[G1_OCTET_SIZE];
     file.read(buffer, len);
     
-    octet oct = {static_cast<int>(len), 64, buffer};
+    octet oct = {static_cast<int>(len), G1_OCTET_SIZE, buffer};
     ECP point;
     if (ECP_fromOctet(&point, &oct)) {
       _G1.push_back(point);
@@ -78,10 +81,10 @@ KZG::KZG(const std::string& filename) {
     uint32_t len;
     file.read(reinterpret_cast<char*>(&len), sizeof(len));
     
-    char buffer[128];
+    char buffer[G2_OCTET_SIZE];
     file.read(buffer, len);
     
-    octet oct = {static_cast<int>(len), 128, buffer};
+    octet oct = {static_cast<int>(len), G2_OCTET_SIZE, buffer};
     ECP2 point;
     if (ECP2_fromOctet(&point, &oct)) {
       _G2.push_back(point);
@@ -183,13 +186,17 @@ void KZG::export_setup(const std::string& filename) {
     return;
   }
   
+  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
+  constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_B160_56 + 1;
+  
   uint64_t num_coeffs = static_cast<uint64_t>(_G1.size());
   file.write(reinterpret_cast<const char*>(&num_coeffs), sizeof(num_coeffs));
   
   for (uint64_t i = 0; i < num_coeffs; i++) {
-    char buffer[64];
-    octet oct = {0, 64, buffer};
+    char buffer[G1_OCTET_SIZE];
+    octet oct = {0, G1_OCTET_SIZE, buffer};
     ECP_toOctet(&oct, &_G1[i], false);
+    std::cout << oct.len << std::endl;
     
     uint32_t len = static_cast<uint32_t>(oct.len);
     file.write(reinterpret_cast<const char*>(&len), sizeof(len));
@@ -197,8 +204,8 @@ void KZG::export_setup(const std::string& filename) {
   }
   
   for (uint64_t i = 0; i < num_coeffs; i++) {
-    char buffer[128];
-    octet oct = {0, 128, buffer};
+    char buffer[G2_OCTET_SIZE];
+    octet oct = {0, G2_OCTET_SIZE, buffer};
     ECP2_toOctet(&oct, &_G2[i], false);
 
     uint32_t len = static_cast<uint32_t>(oct.len);
