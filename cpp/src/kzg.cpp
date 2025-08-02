@@ -3,11 +3,7 @@
 #include <fp12_BN158.h>
 #include <pair_BN158.h>
 #include <big_B160_56.h>
-#include <iostream>
-#include <iomanip>
 #include <fstream>
-#include <sstream>
-#include <string>
 #include <cstdint>
 #include "util.h"
 
