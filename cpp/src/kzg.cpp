@@ -3,6 +3,12 @@
 #include <fp12_BN158.h>
 #include <pair_BN158.h>
 #include <big_B160_56.h>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <cstdint>
 #include "util.h"
 
 using namespace std;
@@ -37,6 +43,59 @@ KZG::KZG(int num_coeff) {
     
     BIG_inc(BIG_i, 1);
   }
+
+}
+
+KZG::KZG(const std::string& filename) {
+  ZZ z = ZZ_from_BIG(CURVE_Order);
+  ZZ_p::init(z);
+  
+  std::ifstream file(filename, std::ios::in | std::ios::binary);
+  if (!file.is_open()) {
+    std::cerr << "failed to import" << std::endl;
+    return;
+  }
+  
+  uint64_t num_coeffs;
+  file.read(reinterpret_cast<char*>(&num_coeffs), sizeof(num_coeffs));
+  
+  _G1.reserve(static_cast<size_t>(num_coeffs));
+  _G2.reserve(static_cast<size_t>(num_coeffs));
+  
+  for (uint64_t i = 0; i < num_coeffs; i++) {
+    uint32_t len;
+    file.read(reinterpret_cast<char*>(&len), sizeof(len));
+    
+    char buffer[64];
+    file.read(buffer, len);
+    
+    octet oct = {static_cast<int>(len), 64, buffer};
+    ECP point;
+    if (ECP_fromOctet(&point, &oct)) {
+      _G1.push_back(point);
+    } else {
+      std::cerr << "point at index " << i << " is invalid" << std::endl;
+    }
+  }
+  
+  for (uint64_t i = 0; i < num_coeffs; i++) {
+    uint32_t len;
+    file.read(reinterpret_cast<char*>(&len), sizeof(len));
+    
+    char buffer[128];
+    file.read(buffer, len);
+    
+    octet oct = {static_cast<int>(len), 128, buffer};
+    ECP2 point;
+    if (ECP2_fromOctet(&point, &oct)) {
+      _G2.push_back(point);
+    } else {
+      std::cerr << "point at index " << i << " is invalid" << std::endl;
+    }
+  }
+  
+  file.close();
+  std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
 ECP KZG::commit(const ZZ_pX& P) {
@@ -119,4 +178,38 @@ bool KZG::verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points)
   PAIR_fexp(&v2);
   
   return FP12_equals(&v1, &v2);
+}
+
+void KZG::export_setup(const std::string& filename) {
+  std::ofstream file(filename, std::ios::out | std::ios::binary | std::ios::trunc);
+  if (!file.is_open()) {
+    std::cerr << "failed to export" << std::endl;
+    return;
+  }
+  
+  uint64_t num_coeffs = static_cast<uint64_t>(_G1.size());
+  file.write(reinterpret_cast<const char*>(&num_coeffs), sizeof(num_coeffs));
+  
+  for (uint64_t i = 0; i < num_coeffs; i++) {
+    char buffer[64];
+    octet oct = {0, 64, buffer};
+    ECP_toOctet(&oct, &_G1[i], false);
+    
+    uint32_t len = static_cast<uint32_t>(oct.len);
+    file.write(reinterpret_cast<const char*>(&len), sizeof(len));
+    file.write(oct.val, oct.len);
+  }
+  
+  for (uint64_t i = 0; i < num_coeffs; i++) {
+    char buffer[128];
+    octet oct = {0, 128, buffer};
+    ECP2_toOctet(&oct, &_G2[i], false);
+
+    uint32_t len = static_cast<uint32_t>(oct.len);
+    file.write(reinterpret_cast<const char*>(&len), sizeof(len));
+    file.write(oct.val, oct.len);
+  }
+  
+  file.close();
+  std::cout << "exported group elements to " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
