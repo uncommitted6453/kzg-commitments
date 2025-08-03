@@ -195,10 +195,10 @@ bool verify(const public_params& setup, ECP& commit, ECP& proof, std::vector<pai
   return FP12_equals(&v1, &v2);
 }
 
-void export_params_file(const public_params& setup, const std::string& filename) {
+bool export_params_file(const public_params& setup, const std::string& filename) {
   std::ofstream file(filename, std::ios::out | std::ios::binary | std::ios::trunc);
   if (!file.is_open()) {
-    return;
+    return false;
   }
   
   constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
@@ -228,6 +228,7 @@ void export_params_file(const public_params& setup, const std::string& filename)
   }
   
   file.close();
+  return true;
 }
 
 }
