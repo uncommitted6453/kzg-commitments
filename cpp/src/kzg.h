@@ -12,24 +12,26 @@ using namespace BN158;
 using namespace NTL;
 using namespace core;
 
-class KZG {
-private:
+namespace kzg {
+
+struct public_params {
   std::vector<ECP> _G1;
   std::vector<ECP2> _G2;
-  
-  ECP polyeval_G1(const ZZ_pX& P);
-  ECP2 polyeval_G2(const ZZ_pX& P);
-
-public:
-  KZG(int num_coeff);
-  // for loading output of export_setup
-  KZG(const std::string& filename);
-  
-  ECP commit(const ZZ_pX& P);
-  ECP create_proof(const ZZ_pX &P, int offset, int length);
-  bool verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
-  
-  void export_setup(const std::string& filename = "kzg_public");
 };
+
+public_params trusted_setup(int num_coeff);
+
+public_params load_params_file(const std::string& filename);
+
+ECP polyeval_G1(const public_params& setup, const ZZ_pX& P);
+ECP2 polyeval_G2(const public_params& setup, const ZZ_pX& P);
+
+ECP commit(const public_params& setup, const ZZ_pX& P);
+ECP create_proof(const public_params& setup, const ZZ_pX& P, int offset, int length);
+bool verify(const public_params& setup, ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
+
+void export_params_file(const public_params& setup, const std::string& filename = "kzg_public");
+
+}
 
 #endif
