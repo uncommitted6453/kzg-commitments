@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <cstring>
+#include <NTL/ZZ_pX.h>
 #include "kzg.h"
 #include "util.h"
 
@@ -15,32 +17,30 @@ int main(int argc, char *argv[]) {
   KZG kzg("kzg_public");
   
   /* ----- commit ------ */
-  vector<pair<ZZ_p, ZZ_p>> points;
-  create_points_from_string(points, data, 0);
-  ZZ_pX P = polyfit(points);
-  ECP commit = kzg.commit(P);
+  KZGPolynomial P = KZG::create_polynomial_from_string(data, 0);
+  KZGCommitment commit = kzg.commit(P);
   
   /* ----- create proof------ */
-  ECP hello_proof = kzg.create_proof(P, 0, strlen("hello"));
-  ECP name_proof = kzg.create_proof(P, strlen("hello there my "), strlen("name is"));
-  ECP bob_proof = kzg.create_proof(P, strlen("hello there my name is "), strlen("bob"));
+  KZGProof hello_proof = kzg.create_proof(P, 0, strlen("hello"));
+  KZGProof name_proof = kzg.create_proof(P, strlen("hello there my "), strlen("name is"));
+  KZGProof bob_proof = kzg.create_proof(P, strlen("hello there my name is "), strlen("bob"));
   
   /* ------ verify ------- */
-  vector<pair<ZZ_p, ZZ_p>> verify;
+  vector<KZGEvaluationPoint> verify;
   
-  create_points_from_string(verify, "hello", 0);
+  verify = KZG::create_evaluation_points_from_string("hello", 0);
   if (kzg.verify(commit, hello_proof, verify)) cout << "verified: hello" << endl;
   verify.clear();
   
-  create_points_from_string(verify, "name is", strlen("hello there my "));
+  verify = KZG::create_evaluation_points_from_string("name is", strlen("hello there my "));
   if (kzg.verify(commit, name_proof, verify)) cout << "verified: name is" << endl;
   verify.clear();
   
-  create_points_from_string(verify, "bob", strlen("hello there my name is "));
+  verify = KZG::create_evaluation_points_from_string("bob", strlen("hello there my name is "));
   if (kzg.verify(commit, bob_proof, verify)) cout << "verified: bob" << endl;
   verify.clear();
   
-  create_points_from_string(verify, "alice", strlen("hello there my name is "));
+  verify = KZG::create_evaluation_points_from_string("alice", strlen("hello there my name is "));
   if (!kzg.verify(commit, bob_proof, verify)) cout << "verified: not alice" << endl;
   verify.clear();
   

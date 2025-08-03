@@ -6,6 +6,15 @@
 #include <ecp2_BN158.h>
 #include <NTL/ZZX.h>
 #include <core.h>
+#include <cstdint>
+#include <string>
+#include <utility>
+
+using KZGPolynomial = std::vector<uint8_t>;
+using KZGCommitment = std::vector<uint8_t>;
+using KZGProof = std::vector<uint8_t>;
+using KZGFieldElement = std::vector<uint8_t>;
+using KZGEvaluationPoint = std::pair<KZGFieldElement, KZGFieldElement>; 
 
 using namespace std;
 using namespace BN158;
@@ -22,12 +31,14 @@ private:
 
 public:
   KZG(int num_coeff);
-  // for loading output of export_setup
   KZG(const std::string& filename);
+  KZGCommitment commit(const KZGPolynomial& polynomial);
+  KZGProof create_proof(const KZGPolynomial& polynomial, int offset, int length);
+  bool verify(const KZGCommitment& commitment, const KZGProof& proof, 
+              const std::vector<KZGEvaluationPoint>& points);
   
-  ECP commit(const ZZ_pX& P);
-  ECP create_proof(const ZZ_pX &P, int offset, int length);
-  bool verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
+  static KZGPolynomial create_polynomial_from_string(const std::string& data, int offset = 0);
+  static std::vector<KZGEvaluationPoint> create_evaluation_points_from_string(const std::string& data, int offset = 0);
   
   void export_setup(const std::string& filename = "kzg_public");
 };
