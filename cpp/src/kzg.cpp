@@ -16,28 +16,25 @@ KZG::KZG(int num_coeff) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
-  ZZ_p s = conv<ZZ_p>("12345678");
+  // TODO: change this to be random number, look into how to do that from miracl-core
+  ZZ_p s = conv<ZZ_p>("85372431383432744");
+  BIG BIG_s;
+  BIG_from_ZZ(BIG_s, rep(s));
   
-  BIG BIG_i;
-  BIG_zero(BIG_i);
+  ECP G1_s_i;
+  ECP_generator(&G1_s_i);
+  _G1.push_back(G1_s_i);
   
-  for (int i = 0; i < num_coeff; i++) {
-    ZZ_p s_i = power(s, i);
-    
-    BIG BIG_s_i;
-    BIG_from_ZZ(BIG_s_i, rep(s_i));
-    
-    ECP G1_s_i;
-    ECP_generator(&G1_s_i);
-    PAIR_G1mul(&G1_s_i, BIG_s_i);
+  ECP2 G2_s_i;
+  ECP2_generator(&G2_s_i);
+  _G2.push_back(G2_s_i);
+  
+  for (int i = 1; i < num_coeff; i++) {
+    PAIR_G1mul(&G1_s_i, BIG_s);
     _G1.push_back(G1_s_i);
     
-    ECP2 G2_s_i;
-    ECP2_generator(&G2_s_i);
-    PAIR_G2mul(&G2_s_i, BIG_s_i);
+    PAIR_G2mul(&G2_s_i, BIG_s);
     _G2.push_back(G2_s_i);
-    
-    BIG_inc(BIG_i, 1);
   }
 
 }
@@ -196,7 +193,7 @@ void KZG::export_setup(const std::string& filename) {
     char buffer[G1_OCTET_SIZE];
     octet oct = {0, G1_OCTET_SIZE, buffer};
     ECP_toOctet(&oct, &_G1[i], false);
-    std::cout << oct.len << std::endl;
+    // std::cout << oct.len << std::endl;
     
     uint32_t len = static_cast<uint32_t>(oct.len);
     file.write(reinterpret_cast<const char*>(&len), sizeof(len));
