@@ -10,9 +10,9 @@ int main(int argc, char *argv[]) {
   /* ----- setup ------ */
   string data = "hello there my name is bob";
   kzg::public_params setup1 = kzg::trusted_setup(data.size());
-  kzg::export_setup(setup1);
+  kzg::export_params_file(setup1);
   
-  kzg::public_params setup = kzg::load_setup("kzg_public");
+  kzg::public_params setup = kzg::load_params_file("kzg_public");
   
   /* ----- commit ------ */
   vector<pair<ZZ_p, ZZ_p>> points;

@@ -113,11 +113,11 @@ public_params load_params_file(const std::string& filename) {
   return setup;
 }
 
-ECP commit(const public_params& setup, const ZZ_pX& P) {
+ECP commit(public_params& setup, const ZZ_pX& P) {
   return polyeval_G1(setup, P);
 }
 
-ECP polyeval_G1(const public_params& setup, const ZZ_pX& P) {
+ECP polyeval_G1(public_params& setup, const ZZ_pX& P) {
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -138,7 +138,7 @@ ECP polyeval_G1(const public_params& setup, const ZZ_pX& P) {
   return res;
 }
 
-ECP2 polyeval_G2(const public_params& setup, const ZZ_pX& P) {
+ECP2 polyeval_G2(public_params& setup, const ZZ_pX& P) {
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -159,7 +159,7 @@ ECP2 polyeval_G2(const public_params& setup, const ZZ_pX& P) {
   return res;
 }
 
-ECP create_proof(const public_params& setup, const ZZ_pX &P, int offset, int length) {
+ECP create_proof(public_params& setup, const ZZ_pX &P, int offset, int length) {
   vector<pair<ZZ_p, ZZ_p>> points;
   
   for (int i = offset; i < offset + length; i++) {
@@ -176,7 +176,7 @@ ECP create_proof(const public_params& setup, const ZZ_pX &P, int offset, int len
   return polyeval_G1(setup, q);
 }
 
-bool verify(const public_params& setup, ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
+bool verify(public_params& setup, ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
   ZZ_pX I = polyfit(points);
   ZZ_pX Z = from_linear_roots(points);
   
@@ -195,7 +195,7 @@ bool verify(const public_params& setup, ECP& commit, ECP& proof, std::vector<pai
   return FP12_equals(&v1, &v2);
 }
 
-bool export_params_file(const public_params& setup, const std::string& filename) {
+bool export_params_file(public_params& setup, const std::string& filename) {
   std::ofstream file(filename, std::ios::out | std::ios::binary | std::ios::trunc);
   if (!file.is_open()) {
     return false;
