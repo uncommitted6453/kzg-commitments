@@ -14,6 +14,29 @@ using namespace core;
 
 namespace kzg {
 
+class blob {
+private:
+  vector<pair<ZZ_p, ZZ_p>> data;
+
+public:
+  static blob from_string(string s);
+  static blob from_string(string s, int offset);
+  
+  blob(vector<pair<ZZ_p, ZZ_p>>& _data) : data(_data) {}
+  vector<pair<ZZ_p, ZZ_p>>& get_data() { return data; }
+};
+
+class poly {
+private:
+  ZZ_pX data;
+
+public:
+  static poly from_blob(blob blob);
+  
+  poly(ZZ_pX _data) : data(_data) {}
+  const ZZ_pX& get_poly() const { return data; }
+};
+
 class commit {
 private:
   ECP curve_point;
@@ -44,10 +67,10 @@ public:
   trusted_setup(int num_coeff);
   trusted_setup(const std::string& filename);
   
-  commit create_commit(const ZZ_pX& P);  
+  commit create_commit(const kzg::poly& poly);  
   
-  proof create_proof(const ZZ_pX &P, int offset, int length);
-  bool verify_proof(commit& commit, proof& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
+  proof create_proof(const kzg::poly& poly, int offset, int length);
+  bool verify_proof(commit& commit, proof& proof, blob& expected_data);
   
   void export_setup(const std::string& filename = "kzg_public");
 };

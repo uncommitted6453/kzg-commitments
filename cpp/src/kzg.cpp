@@ -94,8 +94,8 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
-kzg::commit kzg::trusted_setup::create_commit(const ZZ_pX& P) {
-  return kzg::commit(polyeval_G1(P));
+kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
+  return kzg::commit(polyeval_G1(poly.get_poly()));
 }
 
 ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
@@ -140,9 +140,10 @@ ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
   return res;
 }
 
-kzg::proof kzg::trusted_setup::create_proof(const ZZ_pX &P, int offset, int length) {
-  vector<pair<ZZ_p, ZZ_p>> points;
+kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int offset, int length) {
+  const ZZ_pX& P = poly.get_poly();
   
+  vector<pair<ZZ_p, ZZ_p>> points;
   for (int i = offset; i < offset + length; i++) {
     ZZ_p ZZ_x, ZZ_y;
     ZZ_x = i;
@@ -157,7 +158,9 @@ kzg::proof kzg::trusted_setup::create_proof(const ZZ_pX &P, int offset, int leng
   return kzg::proof(polyeval_G1(q));
 }
 
-bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
+bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kzg::blob& expected_data) {
+  vector<pair<ZZ_p, ZZ_p>>& points = expected_data.get_data();
+  
   ZZ_pX I = polyfit(points);
   ZZ_pX Z = from_linear_roots(points);
   
@@ -212,4 +215,25 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
   
   file.close();
   std::cout << "exported group elements to " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
+}
+
+kzg::blob kzg::blob::from_string(string s) {
+  return kzg::blob::from_string(s, 0);
+}
+
+kzg::blob kzg::blob::from_string(string s, int offset) {
+  vector<pair<ZZ_p, ZZ_p>> data;
+  
+  for (int i = 0; i < s.size(); i++) {
+    ZZ_p ZZ_x, ZZ_y;
+    ZZ_x = i + offset;
+    ZZ_y = s[i];
+    data.push_back({ ZZ_x, ZZ_y });
+  }
+  
+  return kzg::blob(data); 
+}
+
+kzg::poly kzg::poly::from_blob(kzg::blob blob) {
+  return kzg::poly(polyfit(blob.get_data()));
 }
