@@ -32,6 +32,7 @@ private:
 
 public:
   static poly from_blob(blob blob);
+  static poly from_random(int num_coeff);
   
   poly(ZZ_pX _data) : data(_data) {}
   const ZZ_pX& get_poly() const { return data; }
