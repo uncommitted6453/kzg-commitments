@@ -4,11 +4,32 @@
 #include <cstring>
 #include <iostream>
 
+#define FAST_MULTIEVAL_THRESHOLD 140
+
 using namespace std;
 using namespace B160_56;
 using namespace BN158;
 using namespace NTL;
 using namespace core;
+
+static ZZ_pX build_linear_roots_tree(
+  vector<ZZ_pX>& linear_roots,
+  vector<pair<ZZ_p, ZZ_p>>& points,
+  int lo, int hi
+);
+
+static int multieval_R(
+  vector<ZZ_p>& res,
+  const vector<ZZ_pX>& linear_roots,
+  const ZZ_pX& f,
+  int lo, int hi, int idx
+);
+
+static ZZ_pX polyfit_R(
+  vector<pair<ZZ_p, ZZ_p>>& points,
+  const vector<ZZ_pX>& linear_roots,
+  int lo, int hi, int& idx
+);
 
 void BIG_from_ZZ(BIG big, const ZZ& value) {
   unsigned char data[MODBYTES_B160_56];
@@ -41,7 +62,104 @@ ZZ ZZ_from_BIG(const BIG big) {
   return res;
 }
 
-ZZ_pX build_linear_roots_tree(vector<ZZ_pX>& linear_roots, vector<pair<ZZ_p, ZZ_p>>& points, int lo, int hi) {
+void linear_roots_and_polyfit(ZZ_pX& result, ZZ_pX& linear_roots, vector<pair<ZZ_p, ZZ_p>>& points) {
+  int idx = 0;
+  vector<pair<ZZ_p, ZZ_p>> copy = points;
+  vector<ZZ_pX> linear_roots_tree;
+  linear_roots = build_linear_roots_tree(linear_roots_tree, points, 0, points.size() - 1);
+  result = polyfit_R(copy, linear_roots_tree, 0, points.size() - 1, idx);
+}
+
+ZZ_pX polyfit(vector<pair<ZZ_p, ZZ_p>>& points) {
+  ZZ_pX fitted_poly, linear_roots;
+  linear_roots_and_polyfit(fitted_poly, linear_roots, points);
+  return fitted_poly;
+}
+
+void evaluate_polynomial_points(vector<pair<ZZ_p, ZZ_p>>& points, const ZZ_pX& poly, int offset, int length) {
+  if (length < FAST_MULTIEVAL_THRESHOLD) {
+    for (int i = offset; i < offset + length; i++) {
+      ZZ_p ZZ_x, ZZ_y;
+      ZZ_x = i;
+      ZZ_y = eval(poly, ZZ_x);
+      points.push_back({ ZZ_x, ZZ_y });
+    }
+  } else {
+    for (int i = offset; i <= offset + length; i++) {
+      ZZ_p ZZ_x, ZZ_y;
+      ZZ_x = i;
+      ZZ_y = 0;
+      points.push_back({ ZZ_x, ZZ_y });
+    }
+    
+    vector<ZZ_pX> linear_roots_tree;
+    build_linear_roots_tree(linear_roots_tree, points, 0, points.size() - 1);
+    vector<ZZ_p> points_eval;
+    multieval_R(points_eval, linear_roots_tree, poly, 0, points.size() - 1, 0);
+    
+    for (int i = 0; i < points.size(); i++) {
+      points[i].second = points_eval[i];
+    }
+  }
+}
+
+static ZZ_pX polyfit_R(vector<pair<ZZ_p, ZZ_p>>& points, const vector<ZZ_pX>& linear_roots, int lo, int hi, int& idx) {
+  if (lo == hi) {
+    ZZ_pX f;
+    SetCoeff(f, 0, points[lo].second);
+    return f;
+  }
+  
+  const ZZ_pX& Z_1 = linear_roots[linear_roots.size() - idx++ - 1];
+  const ZZ_pX& Z_2 = linear_roots[linear_roots.size() - idx++ - 1];
+  
+  int mid = (lo + hi) / 2;
+  
+  if (mid - lo < FAST_MULTIEVAL_THRESHOLD) {
+    for (int i = lo; i <= mid; i++)
+      points[i].second /= eval(Z_2, points[i].first);
+  } else {
+    vector<ZZ_p> prod_eval;
+    multieval_R(prod_eval, linear_roots, Z_2, lo, mid, idx);
+    for (int i = 0; i < prod_eval.size(); i++)
+      points[lo + i].second /= prod_eval[i];
+  }
+  ZZ_pX f_1 = polyfit_R(points, linear_roots, lo, mid, idx);
+  
+  if (hi - (mid + 1) < FAST_MULTIEVAL_THRESHOLD) {
+    for (int i = mid + 1; i <= hi; i++)
+      points[i].second /= eval(Z_1, points[i].first);
+  } else {
+    vector<ZZ_p> prod_eval;
+    multieval_R(prod_eval, linear_roots, Z_1, mid + 1, hi, idx);
+    for (int i = 0; i < prod_eval.size(); i++)
+      points[mid + 1 + i].second /= prod_eval[i];
+  }
+  ZZ_pX f_2 = polyfit_R(points, linear_roots, mid + 1, hi, idx);
+  
+  return f_2 * Z_1 + f_1 * Z_2;
+}
+
+static int multieval_R(vector<ZZ_p>& res, const vector<ZZ_pX>& linear_roots, const ZZ_pX& f, int lo, int hi, int idx) {
+  if (lo == hi) {
+    res.push_back(f[0]);
+    return idx;
+  }
+  
+  const ZZ_pX& Z_1 = linear_roots[linear_roots.size() - idx++ - 1];
+  const ZZ_pX& Z_2 = linear_roots[linear_roots.size() - idx++ - 1];
+  
+  ZZ_pX f_1 = f % Z_1;
+  ZZ_pX f_2 = f % Z_2;
+  
+  int mid = (lo + hi) / 2;
+  idx = multieval_R(res, linear_roots, f_1, lo, mid, idx);
+  idx = multieval_R(res, linear_roots, f_2, mid + 1, hi, idx);
+  
+  return idx;
+}
+
+static ZZ_pX build_linear_roots_tree(vector<ZZ_pX>& linear_roots, vector<pair<ZZ_p, ZZ_p>>& points, int lo, int hi) {
   if (lo == hi) {
     ZZ_pX linear_root;
     SetCoeff(linear_root, 0, -points[lo].first);
@@ -56,120 +174,6 @@ ZZ_pX build_linear_roots_tree(vector<ZZ_pX>& linear_roots, vector<pair<ZZ_p, ZZ_
   linear_roots.push_back(Z_1);
   
   return Z_1 * Z_2;
-}
-
-int multieval_R(vector<ZZ_p>& res, vector<ZZ_pX>& linear_roots, ZZ_pX& f, int lo, int hi, int idx) {
-  if (lo == hi) {
-    res.push_back(f[0]);
-    return idx;
-  }
-  
-  ZZ_pX& Z_1 = linear_roots[linear_roots.size() - idx++ - 1];
-  ZZ_pX& Z_2 = linear_roots[linear_roots.size() - idx++ - 1];
-  
-  ZZ_pX f_1 = f % Z_1;
-  ZZ_pX f_2 = f % Z_2;
-  
-  int mid = (lo + hi) / 2;
-  idx = multieval_R(res, linear_roots, f_1, lo, mid, idx);
-  idx = multieval_R(res, linear_roots, f_2, mid + 1, hi, idx);
-  
-  return idx;
-}
-
-ZZ_pX polyfit_R(vector<pair<ZZ_p, ZZ_p>>& points, vector<ZZ_pX>& linear_roots, int lo, int hi, int& idx) {
-  if (lo == hi) {
-    ZZ_pX f;
-    SetCoeff(f, 0, points[lo].second);
-    return f;
-  }
-  
-  ZZ_pX& Z_1 = linear_roots[linear_roots.size() - idx++ - 1];
-  ZZ_pX& Z_2 = linear_roots[linear_roots.size() - idx++ - 1];
-  
-  int mid = (lo + hi) / 2;
-  
-  if (mid - lo < 140) {
-    for (int i = lo; i <= mid; i++)
-      points[i].second /= eval(Z_2, points[i].first);
-  } else {
-    vector<ZZ_p> prod_eval;
-    multieval_R(prod_eval, linear_roots, Z_2, lo, mid, idx);
-    for (int i = 0; i < prod_eval.size(); i++)
-      points[lo + i].second /= prod_eval[i];
-  }
-  ZZ_pX f_1 = polyfit_R(points, linear_roots, lo, mid, idx);
-  
-  if (hi - (mid + 1) < 140) {
-    for (int i = mid + 1; i <= hi; i++)
-      points[i].second /= eval(Z_1, points[i].first);
-  } else {
-    vector<ZZ_p> prod_eval;
-    multieval_R(prod_eval, linear_roots, Z_1, mid + 1, hi, idx);
-    for (int i = 0; i < prod_eval.size(); i++)
-      points[mid + 1 + i].second /= prod_eval[i];
-  }
-  ZZ_pX f_2 = polyfit_R(points, linear_roots, mid + 1, hi, idx);
-  
-  return f_2 * Z_1 + f_1 * Z_2;
-}
-
-ZZ_pX polyfit(vector<pair<ZZ_p, ZZ_p>>& points) {
-  vector<pair<ZZ_p, ZZ_p>> copy = points;
-  int idx = 0;
-  vector<ZZ_pX> linear_roots;
-  build_linear_roots_tree(linear_roots, points, 0, points.size() - 1);
-  return polyfit_R(copy, linear_roots, 0, points.size() - 1, idx);
-}
-
-// ZZ_pX polyfit(vector<pair<ZZ_p, ZZ_p>>& points) {
-//   ZZ_pX P;
-//   
-//   for (const pair<ZZ_p, ZZ_p>& A : points) {
-//     ZZ_pX bottom;
-//     SetCoeff(bottom, 0, 1);
-//     
-//     ZZ_pX top;
-//     SetCoeff(top, 0, A.second);
-//     
-//     for (const pair<ZZ_p, ZZ_p>& B : points) {
-//       if (A.first == B.first)
-//         continue;
-//       
-//       ZZ_pX factor;
-//       SetCoeff(factor, 0, -B.first);
-//       SetCoeff(factor, 1, 1);
-//       
-//       top *= factor;
-//       bottom *= A.first - B.first;
-//     }
-//     P += top / bottom;
-//   }
-//   
-//   return P;
-// }
-
-ZZ_pX from_linear_roots(vector<pair<ZZ_p, ZZ_p>>& points) {
-  ZZ_pX Z;
-  SetCoeff(Z, 0, 1);
-  
-  for (const pair<ZZ_p, ZZ_p>& point : points) {
-    ZZ_pX factor;
-    SetCoeff(factor, 0, -point.first);
-    SetCoeff(factor, 1, 1);
-    Z *= factor;
-  }
-  
-  return Z;
-}
-
-void create_points_from_string(vector<pair<ZZ_p, ZZ_p>>& res, string data, int offset) {
-  for (int i = 0; i < data.size(); i++) {
-    ZZ_p ZZ_x, ZZ_y;
-    ZZ_x = i + offset;
-    ZZ_y = data[i];
-    res.push_back({ ZZ_x, ZZ_y });
-  }
 }
 
 std::vector<uint8_t> serialize_ECP(const ECP& point) {

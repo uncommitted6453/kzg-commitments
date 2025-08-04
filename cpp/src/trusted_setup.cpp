@@ -149,15 +149,10 @@ kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int offset, i
   const ZZ_pX& P = poly.get_poly();
   
   vector<pair<ZZ_p, ZZ_p>> points;
-  for (int i = offset; i < offset + length; i++) {
-    ZZ_p ZZ_x, ZZ_y;
-    ZZ_x = i;
-    ZZ_y = eval(P, ZZ_x);
-    points.push_back({ ZZ_x, ZZ_y });
-  }
+  evaluate_polynomial_points(points, P, offset, length);
   
-  ZZ_pX I = polyfit(points);
-  ZZ_pX Z = from_linear_roots(points);
+  ZZ_pX I, Z;
+  linear_roots_and_polyfit(I, Z, points);
   ZZ_pX q = (P - I) / Z;
   
   return kzg::proof(polyeval_G1(q));
@@ -166,8 +161,8 @@ kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int offset, i
 bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kzg::blob& expected_data) {
   vector<pair<ZZ_p, ZZ_p>>& points = expected_data.get_data();
   
-  ZZ_pX I = polyfit(points);
-  ZZ_pX Z = from_linear_roots(points);
+  ZZ_pX I, Z;
+  linear_roots_and_polyfit(I, Z, points);
   
   ECP2 p1 = polyeval_G2(Z);
   FP12 v1;
@@ -220,43 +215,4 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
   
   file.close();
   std::cout << "exported group elements to " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
-}
-
-kzg::blob kzg::blob::from_string(string s) {
-  return kzg::blob::from_string(s, 0);
-}
-
-kzg::blob kzg::blob::from_string(string s, int offset) {
-  vector<pair<ZZ_p, ZZ_p>> data;
-  
-  for (int i = 0; i < s.size(); i++) {
-    ZZ_p ZZ_x, ZZ_y;
-    ZZ_x = i + offset;
-    ZZ_y = s[i];
-    data.push_back({ ZZ_x, ZZ_y });
-  }
-  
-  return kzg::blob(data); 
-}
-
-kzg::poly kzg::poly::from_blob(kzg::blob blob) {
-  return kzg::poly(polyfit(blob.get_data()));
-}
-
-std::vector<uint8_t> kzg::commit::serialize() {
-  return serialize_ECP(curve_point);
-}
-
-kzg::commit kzg::commit::deserialize(const std::vector<uint8_t>& bytes) {
-  ECP point = deserialize_ECP(bytes);
-  return kzg::commit(point);
-}
-
-std::vector<uint8_t> kzg::proof::serialize() {
-  return serialize_ECP(curve_point);
-}
-
-kzg::proof kzg::proof::deserialize(const std::vector<uint8_t>& bytes) {
-  ECP point = deserialize_ECP(bytes);
-  return kzg::proof(point);
 }
