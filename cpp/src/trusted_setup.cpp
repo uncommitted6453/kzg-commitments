@@ -3,40 +3,104 @@
 #include <fp12_BN158.h>
 #include <pair_BN158.h>
 #include <big_B160_56.h>
+#include <randapi.h>
 #include <fstream>
 #include <cstdint>
+#include <random>
+#include <array>
+#include <thread>
+#include <vector>
+#include <functional>
 #include "util.h"
 
 using namespace std;
 using namespace BN158;
 using namespace B160_56;
 using namespace NTL;
+using namespace core;
+
+void generate_random_BIG(BIG& random);
+
+void kzg::trusted_setup::fill_output(
+  int start, int end, const std::vector<BIG>& powers_of_s
+) {
+  for (int i = start; i < end; i++) {
+    ECP G1_s_i;
+    ECP_generator(&G1_s_i);
+    PAIR_G1mul(&G1_s_i, const_cast<BIG&>(powers_of_s[i]));
+    _G1[i] = G1_s_i;
+
+    ECP2 G2_s_i;
+    ECP2_generator(&G2_s_i);
+    PAIR_G2mul(&G2_s_i, const_cast<BIG&>(powers_of_s[i]));
+    _G2[i] = G2_s_i;
+  }
+}
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
-  // TODO: change this to be random number, look into how to do that from miracl-core
-  ZZ_p s = conv<ZZ_p>("85372431383432744");
   BIG BIG_s;
-  BIG_from_ZZ(BIG_s, rep(s));
-  
-  ECP G1_s_i;
-  ECP_generator(&G1_s_i);
-  _G1.push_back(G1_s_i);
-  
-  ECP2 G2_s_i;
-  ECP2_generator(&G2_s_i);
-  _G2.push_back(G2_s_i);
-  
-  for (int i = 1; i < num_coeff; i++) {
-    PAIR_G1mul(&G1_s_i, BIG_s);
-    _G1.push_back(G1_s_i);
-    
-    PAIR_G2mul(&G2_s_i, BIG_s);
-    _G2.push_back(G2_s_i);
+  generate_random_BIG(BIG_s);
+  ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
+
+  _G1.resize(num_coeff);
+  _G2.resize(num_coeff);
+
+  std::vector<BIG> powers_of_s(num_coeff);
+  for (int i = 0; i < num_coeff; i++) {
+    ZZ_p s_i = power(s, i);
+    BIG_from_ZZ(powers_of_s[i], rep(s_i));
   }
 
+  unsigned int num_threads = std::thread::hardware_concurrency();
+  if (num_threads == 0) {
+    num_threads = 4;
+  }
+  
+  int elements_per_thread = num_coeff / num_threads;
+  int remaining_elements = num_coeff % num_threads;
+  
+  std::vector<std::thread> threads;
+  threads.reserve(num_threads);
+
+  int start = 0;
+  for (unsigned int t = 0; t < num_threads; t++) {
+    // distribute remaining elements 1 each to first remaining_elements threads
+    int num_elements_to_handle = elements_per_thread;
+    if (t < remaining_elements) {
+      num_elements_to_handle += 1;
+    }
+
+    int end = start + num_elements_to_handle;
+    if (start < num_coeff) {
+      threads.push_back(std::thread(&kzg::trusted_setup::fill_output, this, start, end, std::cref(powers_of_s)));
+    }
+    start = end;
+  }
+  
+  for (auto& thread : threads) {
+    thread.join();
+  }
+
+  std::cout << start << std::endl;
+}
+
+void generate_random_BIG(BIG& random) {
+  csprng rng;
+  std::random_device gen;
+  std::array<unsigned char, 32> seed_bytes;
+  for (int i = 0; i < 32; i++) {
+    seed_bytes[i] = static_cast<unsigned char>(gen());
+  }
+  RAND_seed(&rng, seed_bytes.size(), reinterpret_cast<char*>(seed_bytes.data()));
+
+  BIG curve_order_copy;
+  BIG_rcopy(curve_order_copy, CURVE_Order);
+  
+  BIG_randomnum(random, curve_order_copy, &rng);
+  RAND_clean(&rng);
 }
 
 kzg::trusted_setup::trusted_setup(const std::string& filename) {
@@ -216,3 +280,4 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
   file.close();
   std::cout << "exported group elements to " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
+

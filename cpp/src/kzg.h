@@ -4,11 +4,13 @@
 #include <vector>
 #include <ecp_BN158.h>
 #include <ecp2_BN158.h>
+#include <big_B160_56.h>
 #include <NTL/ZZX.h>
 #include <core.h>
 
 using namespace std;
 using namespace BN158;
+using namespace B160_56;
 using namespace NTL;
 using namespace core;
 
@@ -70,6 +72,7 @@ private:
   ECP polyeval_G1(const ZZ_pX& P);
   ECP2 polyeval_G2(const ZZ_pX& P);
 
+  void fill_output(int start, int end, const std::vector<BIG>& powers_of_s);
 public:
   trusted_setup(int num_coeff);
   trusted_setup(const std::string& filename);
