@@ -6,7 +6,8 @@
 using namespace std;
 using namespace NTL;
 
-int main(int argc, char *argv[]) {
+void exmaple_program() {
+  
   /* ----- setup ------ */
   kzg::trusted_setup kzg(128);
   
@@ -35,6 +36,9 @@ int main(int argc, char *argv[]) {
   
   verify = kzg::blob::from_string("alice", strlen("hello there my name is "));
   if (!kzg.verify_proof(commit, bob_proof, verify)) cout << "verified: not alice" << endl;
-  
+}
+
+int main(int argc, char *argv[]) {
+  example_program();
   return 0;
 }
