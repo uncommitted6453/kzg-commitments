@@ -21,18 +21,18 @@ using namespace core;
 
 void generate_random_BIG(BIG& random);
 
-void kzg::trusted_setup::fill_output(
-  int start, int end, const std::vector<BIG>& powers_of_s
+void kzg::trusted_setup::generate_elements_range(
+  int start, int end, const std::vector<BIG>& s_powers
 ) {
   for (int i = start; i < end; i++) {
     ECP G1_s_i;
     ECP_generator(&G1_s_i);
-    PAIR_G1mul(&G1_s_i, const_cast<BIG&>(powers_of_s[i]));
+    PAIR_G1mul(&G1_s_i, const_cast<BIG&>(s_powers[i]));
     _G1[i] = G1_s_i;
 
     ECP2 G2_s_i;
     ECP2_generator(&G2_s_i);
-    PAIR_G2mul(&G2_s_i, const_cast<BIG&>(powers_of_s[i]));
+    PAIR_G2mul(&G2_s_i, const_cast<BIG&>(s_powers[i]));
     _G2[i] = G2_s_i;
   }
 }
@@ -48,10 +48,10 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
   _G1.resize(num_coeff);
   _G2.resize(num_coeff);
 
-  std::vector<BIG> powers_of_s(num_coeff);
+  std::vector<BIG> s_powers(num_coeff);
   for (int i = 0; i < num_coeff; i++) {
     ZZ_p s_i = power(s, i);
-    BIG_from_ZZ(powers_of_s[i], rep(s_i));
+    BIG_from_ZZ(s_powers[i], rep(s_i));
   }
 
   unsigned int num_threads = std::thread::hardware_concurrency();
@@ -75,7 +75,10 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
 
     int end = start + num_elements_to_handle;
     if (start < num_coeff) {
-      threads.push_back(std::thread(&kzg::trusted_setup::fill_output, this, start, end, std::cref(powers_of_s)));
+      threads.push_back(std::thread(
+        &kzg::trusted_setup::generate_elements_range, 
+        this, start, end, std::cref(s_powers)
+      ));
     }
     start = end;
   }
@@ -83,8 +86,6 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
   for (auto& thread : threads) {
     thread.join();
   }
-
-  std::cout << start << std::endl;
 }
 
 void generate_random_BIG(BIG& random) {

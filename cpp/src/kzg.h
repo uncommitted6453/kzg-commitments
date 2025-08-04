@@ -72,7 +72,7 @@ private:
   ECP polyeval_G1(const ZZ_pX& P);
   ECP2 polyeval_G2(const ZZ_pX& P);
 
-  void fill_output(int start, int end, const std::vector<BIG>& powers_of_s);
+  void generate_elements_range(int start, int end, const std::vector<BIG>& s_powers);
 public:
   trusted_setup(int num_coeff);
   trusted_setup(const std::string& filename);
