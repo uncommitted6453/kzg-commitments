@@ -11,11 +11,12 @@ int main(int argc, char *argv[]) {
   kzg::trusted_setup kzg(128);
   
   /* ----- commit ------ */
-  
   string data = "hello there my name is bob";
   kzg::blob blob = kzg::blob::from_string(data);
   kzg::poly poly = kzg::poly::from_blob(blob);
   kzg::commit commit = kzg.create_commit(poly);
+  
+  if (kzg.verify_commit(commit, poly)) cout << "verified: commit is correct" << endl;
   
   /* ----- create proof------ */
   kzg::proof hello_proof = kzg.create_proof(poly, 0, strlen("hello"));

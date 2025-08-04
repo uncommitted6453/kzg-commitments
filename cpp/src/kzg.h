@@ -67,7 +67,8 @@ public:
   trusted_setup(int num_coeff);
   trusted_setup(const std::string& filename);
   
-  commit create_commit(const kzg::poly& poly);  
+  commit create_commit(const kzg::poly& poly);
+  bool verify_commit(kzg::commit& commit, const kzg::poly& poly);
   
   proof create_proof(const kzg::poly& poly, int offset, int length);
   bool verify_proof(commit& commit, proof& proof, blob& expected_data);

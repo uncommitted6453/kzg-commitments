@@ -98,6 +98,11 @@ kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
   return kzg::commit(polyeval_G1(poly.get_poly()));
 }
 
+bool kzg::trusted_setup::verify_commit(kzg::commit& commit, const kzg::poly& poly) {
+  kzg::commit expected_commit = create_commit(poly);
+  return ECP_equals(&commit.get_curve_point(), &expected_commit.get_curve_point());
+}
+
 ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
