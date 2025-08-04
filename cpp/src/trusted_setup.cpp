@@ -221,24 +221,3 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
   file.close();
   std::cout << "exported group elements to " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
-
-kzg::blob kzg::blob::from_string(string s) {
-  return kzg::blob::from_string(s, 0);
-}
-
-kzg::blob kzg::blob::from_string(string s, int offset) {
-  vector<pair<ZZ_p, ZZ_p>> data;
-  
-  for (int i = 0; i < s.size(); i++) {
-    ZZ_p ZZ_x, ZZ_y;
-    ZZ_x = i + offset;
-    ZZ_y = s[i];
-    data.push_back({ ZZ_x, ZZ_y });
-  }
-  
-  return kzg::blob(data); 
-}
-
-kzg::poly kzg::poly::from_blob(kzg::blob blob) {
-  return kzg::poly(polyfit(blob.get_data()));
-}
