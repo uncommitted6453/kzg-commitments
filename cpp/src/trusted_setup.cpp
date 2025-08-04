@@ -3,23 +3,37 @@
 #include <fp12_BN158.h>
 #include <pair_BN158.h>
 #include <big_B160_56.h>
+#include <randapi.h>
 #include <fstream>
 #include <cstdint>
+#include <random>
+#include <array>
 #include "util.h"
 
 using namespace std;
 using namespace BN158;
 using namespace B160_56;
 using namespace NTL;
+using namespace core;
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
-  // TODO: change this to be random number, look into how to do that from miracl-core
-  ZZ_p s = conv<ZZ_p>("85372431383432744");
+  csprng rng;
+  std::random_device gen;
+  std::array<unsigned char, 32> seed_bytes;
+  for (int i = 0; i < 32; i++) {
+    seed_bytes[i] = static_cast<unsigned char>(gen());
+  }
+  RAND_seed(&rng, seed_bytes.size(), reinterpret_cast<char*>(seed_bytes.data()));
+
   BIG BIG_s;
-  BIG_from_ZZ(BIG_s, rep(s));
+  BIG curve_order_copy;
+  BIG_rcopy(curve_order_copy, CURVE_Order);
+  
+  BIG_randomnum(BIG_s, curve_order_copy, &rng);
+  RAND_clean(&rng);
   
   ECP G1_s_i;
   ECP_generator(&G1_s_i);
@@ -220,27 +234,6 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
   
   file.close();
   std::cout << "exported group elements to " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
-}
-
-kzg::blob kzg::blob::from_string(string s) {
-  return kzg::blob::from_string(s, 0);
-}
-
-kzg::blob kzg::blob::from_string(string s, int offset) {
-  vector<pair<ZZ_p, ZZ_p>> data;
-  
-  for (int i = 0; i < s.size(); i++) {
-    ZZ_p ZZ_x, ZZ_y;
-    ZZ_x = i + offset;
-    ZZ_y = s[i];
-    data.push_back({ ZZ_x, ZZ_y });
-  }
-  
-  return kzg::blob(data); 
-}
-
-kzg::poly kzg::poly::from_blob(kzg::blob blob) {
-  return kzg::poly(polyfit(blob.get_data()));
 }
 
 std::vector<uint8_t> kzg::commit::serialize() {
