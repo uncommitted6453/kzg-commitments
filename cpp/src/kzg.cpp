@@ -12,7 +12,7 @@ using namespace BN158;
 using namespace B160_56;
 using namespace NTL;
 
-KZG::KZG(int num_coeff) {
+kzg::trusted_setup::trusted_setup(int num_coeff) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
@@ -39,7 +39,7 @@ KZG::KZG(int num_coeff) {
 
 }
 
-KZG::KZG(const std::string& filename) {
+kzg::trusted_setup::trusted_setup(const std::string& filename) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
@@ -94,11 +94,16 @@ KZG::KZG(const std::string& filename) {
   std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
-ECP KZG::commit(const ZZ_pX& P) {
-  return polyeval_G1(P);
+kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
+  return kzg::commit(polyeval_G1(poly.get_poly()));
 }
 
-ECP KZG::polyeval_G1(const ZZ_pX& P) {
+bool kzg::trusted_setup::verify_commit(kzg::commit& commit, const kzg::poly& poly) {
+  kzg::commit expected_commit = create_commit(poly);
+  return ECP_equals(&commit.get_curve_point(), &expected_commit.get_curve_point());
+}
+
+ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -119,7 +124,7 @@ ECP KZG::polyeval_G1(const ZZ_pX& P) {
   return res;
 }
 
-ECP2 KZG::polyeval_G2(const ZZ_pX& P) {
+ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -140,9 +145,10 @@ ECP2 KZG::polyeval_G2(const ZZ_pX& P) {
   return res;
 }
 
-ECP KZG::create_proof(const ZZ_pX &P, int offset, int length) {
-  vector<pair<ZZ_p, ZZ_p>> points;
+kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int offset, int length) {
+  const ZZ_pX& P = poly.get_poly();
   
+  vector<pair<ZZ_p, ZZ_p>> points;
   for (int i = offset; i < offset + length; i++) {
     ZZ_p ZZ_x, ZZ_y;
     ZZ_x = i;
@@ -154,21 +160,23 @@ ECP KZG::create_proof(const ZZ_pX &P, int offset, int length) {
   ZZ_pX Z = from_linear_roots(points);
   ZZ_pX q = (P - I) / Z;
   
-  return polyeval_G1(q);
+  return kzg::proof(polyeval_G1(q));
 }
 
-bool KZG::verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
+bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kzg::blob& expected_data) {
+  vector<pair<ZZ_p, ZZ_p>>& points = expected_data.get_data();
+  
   ZZ_pX I = polyfit(points);
   ZZ_pX Z = from_linear_roots(points);
   
   ECP2 p1 = polyeval_G2(Z);
   FP12 v1;
-  PAIR_ate(&v1, &p1, &proof);
+  PAIR_ate(&v1, &p1, &proof.get_curve_point());
   PAIR_fexp(&v1);
   
   ECP p2 = polyeval_G1(I);
   ECP_neg(&p2);
-  ECP_add(&p2, &commit);
+  ECP_add(&p2, &commit.get_curve_point());
   FP12 v2;
   PAIR_ate(&v2, &_G2[0], &p2);
   PAIR_fexp(&v2);
@@ -176,7 +184,7 @@ bool KZG::verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points)
   return FP12_equals(&v1, &v2);
 }
 
-void KZG::export_setup(const std::string& filename) {
+void kzg::trusted_setup::export_setup(const std::string& filename) {
   std::ofstream file(filename, std::ios::out | std::ios::binary | std::ios::trunc);
   if (!file.is_open()) {
     std::cerr << "failed to export" << std::endl;
@@ -212,4 +220,25 @@ void KZG::export_setup(const std::string& filename) {
   
   file.close();
   std::cout << "exported group elements to " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
+}
+
+kzg::blob kzg::blob::from_string(string s) {
+  return kzg::blob::from_string(s, 0);
+}
+
+kzg::blob kzg::blob::from_string(string s, int offset) {
+  vector<pair<ZZ_p, ZZ_p>> data;
+  
+  for (int i = 0; i < s.size(); i++) {
+    ZZ_p ZZ_x, ZZ_y;
+    ZZ_x = i + offset;
+    ZZ_y = s[i];
+    data.push_back({ ZZ_x, ZZ_y });
+  }
+  
+  return kzg::blob(data); 
+}
+
+kzg::poly kzg::poly::from_blob(kzg::blob blob) {
+  return kzg::poly(polyfit(blob.get_data()));
 }

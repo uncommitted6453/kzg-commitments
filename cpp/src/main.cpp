@@ -8,41 +8,33 @@ using namespace NTL;
 
 int main(int argc, char *argv[]) {
   /* ----- setup ------ */
-  string data = "hello there my name is bob";
-  KZG kzg1(data.size());
-  kzg1.export_setup();
-  
-  KZG kzg("kzg_public");
+  kzg::trusted_setup kzg(128);
   
   /* ----- commit ------ */
-  vector<pair<ZZ_p, ZZ_p>> points;
-  create_points_from_string(points, data, 0);
-  ZZ_pX P = polyfit(points);
-  ECP commit = kzg.commit(P);
+  string data = "hello there my name is bob";
+  kzg::blob blob = kzg::blob::from_string(data);
+  kzg::poly poly = kzg::poly::from_blob(blob);
+  kzg::commit commit = kzg.create_commit(poly);
+  
+  if (kzg.verify_commit(commit, poly)) cout << "verified: commit is correct" << endl;
   
   /* ----- create proof------ */
-  ECP hello_proof = kzg.create_proof(P, 0, strlen("hello"));
-  ECP name_proof = kzg.create_proof(P, strlen("hello there my "), strlen("name is"));
-  ECP bob_proof = kzg.create_proof(P, strlen("hello there my name is "), strlen("bob"));
+  kzg::proof hello_proof = kzg.create_proof(poly, 0, strlen("hello"));
+  kzg::proof name_proof = kzg.create_proof(poly, strlen("hello there my "), strlen("name is"));
+  kzg::proof bob_proof = kzg.create_proof(poly, strlen("hello there my name is "), strlen("bob"));
   
   /* ------ verify ------- */
-  vector<pair<ZZ_p, ZZ_p>> verify;
+  kzg::blob verify = kzg::blob::from_string("hello", 0);
+  if (kzg.verify_proof(commit, hello_proof, verify)) cout << "verified: hello" << endl;
   
-  create_points_from_string(verify, "hello", 0);
-  if (kzg.verify(commit, hello_proof, verify)) cout << "verified: hello" << endl;
-  verify.clear();
+  verify = kzg::blob::from_string("name is", strlen("hello there my "));
+  if (kzg.verify_proof(commit, name_proof, verify)) cout << "verified: name is" << endl;
   
-  create_points_from_string(verify, "name is", strlen("hello there my "));
-  if (kzg.verify(commit, name_proof, verify)) cout << "verified: name is" << endl;
-  verify.clear();
+  verify = kzg::blob::from_string("bob", strlen("hello there my name is "));
+  if (kzg.verify_proof(commit, bob_proof, verify)) cout << "verified: bob" << endl;
   
-  create_points_from_string(verify, "bob", strlen("hello there my name is "));
-  if (kzg.verify(commit, bob_proof, verify)) cout << "verified: bob" << endl;
-  verify.clear();
-  
-  create_points_from_string(verify, "alice", strlen("hello there my name is "));
-  if (!kzg.verify(commit, bob_proof, verify)) cout << "verified: not alice" << endl;
-  verify.clear();
+  verify = kzg::blob::from_string("alice", strlen("hello there my name is "));
+  if (!kzg.verify_proof(commit, bob_proof, verify)) cout << "verified: not alice" << endl;
   
   return 0;
 }
