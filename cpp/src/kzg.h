@@ -45,6 +45,9 @@ private:
 public:
   commit(ECP _curve_point) : curve_point(_curve_point) {}
   ECP& get_curve_point() { return curve_point; }
+
+  std::vector<uint8_t> serialize();
+  static commit deserialize(const std::vector<uint8_t>&);
 };
 
 class proof {
@@ -54,6 +57,9 @@ private:
 public:
   proof(ECP _curve_point) : curve_point(_curve_point) {}
   ECP& get_curve_point() { return curve_point; }
+
+  std::vector<uint8_t> serialize();
+  static proof deserialize(const std::vector<uint8_t>&);
 };
 
 class trusted_setup {

@@ -1,10 +1,14 @@
 #include "util.h"
 
 #include <algorithm>
+#include <cstring>
+#include <iostream>
 
 using namespace std;
 using namespace B160_56;
+using namespace BN158;
 using namespace NTL;
+using namespace core;
 
 void BIG_from_ZZ(BIG big, const ZZ& value) {
   unsigned char data[MODBYTES_B160_56];
@@ -159,11 +163,47 @@ ZZ_pX from_linear_roots(vector<pair<ZZ_p, ZZ_p>>& points) {
   return Z;
 }
 
-extern void create_points_from_string(vector<pair<ZZ_p, ZZ_p>>& res, string data, int offset) {
+void create_points_from_string(vector<pair<ZZ_p, ZZ_p>>& res, string data, int offset) {
   for (int i = 0; i < data.size(); i++) {
     ZZ_p ZZ_x, ZZ_y;
     ZZ_x = i + offset;
     ZZ_y = data[i];
     res.push_back({ ZZ_x, ZZ_y });
   }
+}
+
+std::vector<uint8_t> serialize_ECP(const ECP& point) {
+  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
+  char buffer[G1_OCTET_SIZE];
+  octet oct = {0, G1_OCTET_SIZE, buffer};
+  ECP_toOctet(&oct, const_cast<ECP*>(&point), false);
+  
+  std::vector<uint8_t> result;
+  uint32_t len = static_cast<uint32_t>(oct.len);
+  result.insert(result.end(), 
+                reinterpret_cast<const uint8_t*>(&len), 
+                reinterpret_cast<const uint8_t*>(&len) + sizeof(len));
+  result.insert(result.end(), 
+                reinterpret_cast<const uint8_t*>(oct.val), 
+                reinterpret_cast<const uint8_t*>(oct.val) + oct.len);
+  
+  return result;
+}
+
+ECP deserialize_ECP(const std::vector<uint8_t>& bytes) {
+  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
+  
+  uint32_t len;
+  std::memcpy(&len, bytes.data(), sizeof(len));
+  
+  char buffer[G1_OCTET_SIZE];
+  std::memcpy(buffer, bytes.data() + sizeof(len), len);
+  
+  octet oct = {static_cast<int>(len), G1_OCTET_SIZE, buffer};
+  ECP point;
+  if (!ECP_fromOctet(&point, &oct)) {
+    std::cerr << "failed to deserialize ECP point" << std::endl;
+  }
+  
+  return point;
 }
