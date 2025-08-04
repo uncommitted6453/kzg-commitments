@@ -94,8 +94,8 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
-ECP kzg::trusted_setup::commit(const ZZ_pX& P) {
-  return polyeval_G1(P);
+kzg::commit kzg::trusted_setup::create_commit(const ZZ_pX& P) {
+  return kzg::commit(polyeval_G1(P));
 }
 
 ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
@@ -157,7 +157,7 @@ ECP kzg::trusted_setup::create_proof(const ZZ_pX &P, int offset, int length) {
   return polyeval_G1(q);
 }
 
-bool kzg::trusted_setup::verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
+bool kzg::trusted_setup::verify_proof(kzg::commit& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
   ZZ_pX I = polyfit(points);
   ZZ_pX Z = from_linear_roots(points);
   
@@ -168,7 +168,7 @@ bool kzg::trusted_setup::verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, 
   
   ECP p2 = polyeval_G1(I);
   ECP_neg(&p2);
-  ECP_add(&p2, &commit);
+  ECP_add(&p2, &commit.get_curve_point());
   FP12 v2;
   PAIR_ate(&v2, &_G2[0], &p2);
   PAIR_fexp(&v2);

@@ -14,6 +14,15 @@ using namespace core;
 
 namespace kzg {
 
+class commit {
+private:
+  ECP curve_point;
+
+public:
+  commit(ECP _curve_point) : curve_point(_curve_point) {}
+  ECP& get_curve_point() { return curve_point; }
+};
+
 class trusted_setup {
 private:
   std::vector<ECP> _G1;
@@ -24,12 +33,13 @@ private:
 
 public:
   trusted_setup(int num_coeff);
-  // for loading output of export_setup
   trusted_setup(const std::string& filename);
   
-  ECP commit(const ZZ_pX& P);
+  commit create_commit(const ZZ_pX& P);
+  
+  
   ECP create_proof(const ZZ_pX &P, int offset, int length);
-  bool verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
+  bool verify_proof(commit& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points);
   
   void export_setup(const std::string& filename = "kzg_public");
 };
