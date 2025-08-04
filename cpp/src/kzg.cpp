@@ -12,7 +12,7 @@ using namespace BN158;
 using namespace B160_56;
 using namespace NTL;
 
-KZG::KZG(int num_coeff) {
+kzg::trusted_setup::trusted_setup(int num_coeff) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
@@ -39,7 +39,7 @@ KZG::KZG(int num_coeff) {
 
 }
 
-KZG::KZG(const std::string& filename) {
+kzg::trusted_setup::trusted_setup(const std::string& filename) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
   
@@ -94,11 +94,11 @@ KZG::KZG(const std::string& filename) {
   std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
-ECP KZG::commit(const ZZ_pX& P) {
+ECP kzg::trusted_setup::commit(const ZZ_pX& P) {
   return polyeval_G1(P);
 }
 
-ECP KZG::polyeval_G1(const ZZ_pX& P) {
+ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -119,7 +119,7 @@ ECP KZG::polyeval_G1(const ZZ_pX& P) {
   return res;
 }
 
-ECP2 KZG::polyeval_G2(const ZZ_pX& P) {
+ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -140,7 +140,7 @@ ECP2 KZG::polyeval_G2(const ZZ_pX& P) {
   return res;
 }
 
-ECP KZG::create_proof(const ZZ_pX &P, int offset, int length) {
+ECP kzg::trusted_setup::create_proof(const ZZ_pX &P, int offset, int length) {
   vector<pair<ZZ_p, ZZ_p>> points;
   
   for (int i = offset; i < offset + length; i++) {
@@ -157,7 +157,7 @@ ECP KZG::create_proof(const ZZ_pX &P, int offset, int length) {
   return polyeval_G1(q);
 }
 
-bool KZG::verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
+bool kzg::trusted_setup::verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
   ZZ_pX I = polyfit(points);
   ZZ_pX Z = from_linear_roots(points);
   
@@ -176,7 +176,7 @@ bool KZG::verify(ECP& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points)
   return FP12_equals(&v1, &v2);
 }
 
-void KZG::export_setup(const std::string& filename) {
+void kzg::trusted_setup::export_setup(const std::string& filename) {
   std::ofstream file(filename, std::ios::out | std::ios::binary | std::ios::trunc);
   if (!file.is_open()) {
     std::cerr << "failed to export" << std::endl;

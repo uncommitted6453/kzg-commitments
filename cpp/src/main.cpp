@@ -9,10 +9,7 @@ using namespace NTL;
 int main(int argc, char *argv[]) {
   /* ----- setup ------ */
   string data = "hello there my name is bob";
-  KZG kzg1(data.size());
-  kzg1.export_setup();
-  
-  KZG kzg("kzg_public");
+  kzg::trusted_setup kzg(data.size());
   
   /* ----- commit ------ */
   vector<pair<ZZ_p, ZZ_p>> points;
