@@ -140,7 +140,7 @@ ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
   return res;
 }
 
-ECP kzg::trusted_setup::create_proof(const ZZ_pX &P, int offset, int length) {
+kzg::proof kzg::trusted_setup::create_proof(const ZZ_pX &P, int offset, int length) {
   vector<pair<ZZ_p, ZZ_p>> points;
   
   for (int i = offset; i < offset + length; i++) {
@@ -154,16 +154,16 @@ ECP kzg::trusted_setup::create_proof(const ZZ_pX &P, int offset, int length) {
   ZZ_pX Z = from_linear_roots(points);
   ZZ_pX q = (P - I) / Z;
   
-  return polyeval_G1(q);
+  return kzg::proof(polyeval_G1(q));
 }
 
-bool kzg::trusted_setup::verify_proof(kzg::commit& commit, ECP& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
+bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, std::vector<pair<ZZ_p, ZZ_p>>& points) {
   ZZ_pX I = polyfit(points);
   ZZ_pX Z = from_linear_roots(points);
   
   ECP2 p1 = polyeval_G2(Z);
   FP12 v1;
-  PAIR_ate(&v1, &p1, &proof);
+  PAIR_ate(&v1, &p1, &proof.get_curve_point());
   PAIR_fexp(&v1);
   
   ECP p2 = polyeval_G1(I);

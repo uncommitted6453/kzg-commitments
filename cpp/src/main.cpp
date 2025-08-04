@@ -18,9 +18,9 @@ int main(int argc, char *argv[]) {
   kzg::commit commit = kzg.create_commit(P);
   
   /* ----- create proof------ */
-  ECP hello_proof = kzg.create_proof(P, 0, strlen("hello"));
-  ECP name_proof = kzg.create_proof(P, strlen("hello there my "), strlen("name is"));
-  ECP bob_proof = kzg.create_proof(P, strlen("hello there my name is "), strlen("bob"));
+  kzg::proof hello_proof = kzg.create_proof(P, 0, strlen("hello"));
+  kzg::proof name_proof = kzg.create_proof(P, strlen("hello there my "), strlen("name is"));
+  kzg::proof bob_proof = kzg.create_proof(P, strlen("hello there my name is "), strlen("bob"));
   
   /* ------ verify ------- */
   vector<pair<ZZ_p, ZZ_p>> verify;
