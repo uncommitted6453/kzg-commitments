@@ -242,3 +242,21 @@ kzg::blob kzg::blob::from_string(string s, int offset) {
 kzg::poly kzg::poly::from_blob(kzg::blob blob) {
   return kzg::poly(polyfit(blob.get_data()));
 }
+
+std::vector<uint8_t> kzg::commit::serialize() {
+  return serialize_ECP(curve_point);
+}
+
+kzg::commit kzg::commit::deserialize(const std::vector<uint8_t>& bytes) {
+  ECP point = deserialize_ECP(bytes);
+  return kzg::commit(point);
+}
+
+std::vector<uint8_t> kzg::proof::serialize() {
+  return serialize_ECP(curve_point);
+}
+
+kzg::proof kzg::proof::deserialize(const std::vector<uint8_t>& bytes) {
+  ECP point = deserialize_ECP(bytes);
+  return kzg::proof(point);
+}
