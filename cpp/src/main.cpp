@@ -2,12 +2,13 @@
 #include <vector>
 #include "kzg.h"
 #include "util.h"
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 using namespace NTL;
 
-void exmaple_program() {
-  
+void example_program() {
   /* ----- setup ------ */
   kzg::trusted_setup kzg(128);
   
@@ -38,7 +39,27 @@ void exmaple_program() {
   if (!kzg.verify_proof(commit, bob_proof, verify)) cout << "verified: not alice" << endl;
 }
 
+void example_benchmark() {
+  auto t_start = high_resolution_clock::now();
+  kzg::trusted_setup kzg(128);
+  auto t_stop = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>(t_stop - t_start);
+  cout << "setup took " << duration.count() << " microseconds" << endl;
+  
+  t_start = high_resolution_clock::now();
+  
+  string data = "abcdefghijklmnopqrstuvxyz";
+  kzg::blob blob = kzg::blob::from_string(data);
+  kzg::poly poly = kzg::poly::from_blob(blob);
+  kzg::commit commit = kzg.create_commit(poly);
+  
+  t_stop = high_resolution_clock::now();
+  duration = duration_cast<microseconds>(t_stop - t_start);
+  cout << "commit took " << duration.count() << " microseconds" << endl;
+}
+
 int main(int argc, char *argv[]) {
   example_program();
+  example_benchmark();
   return 0;
 }
