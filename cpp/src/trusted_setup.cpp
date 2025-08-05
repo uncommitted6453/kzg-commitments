@@ -3,11 +3,8 @@
 #include <fp12_BN158.h>
 #include <pair_BN158.h>
 #include <big_B160_56.h>
-#include <randapi.h>
 #include <fstream>
 #include <cstdint>
-#include <random>
-#include <array>
 #include <thread>
 #include <vector>
 #include <functional>
@@ -18,8 +15,6 @@ using namespace BN158;
 using namespace B160_56;
 using namespace NTL;
 using namespace core;
-
-void generate_random_BIG(BIG& random);
 
 void kzg::trusted_setup::generate_elements_range(
   int start, int end, BIG s_i, BIG s
@@ -90,22 +85,6 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
   for (auto& thread : threads) {
     thread.join();
   }
-}
-
-void generate_random_BIG(BIG& random) {
-  csprng rng;
-  std::random_device gen;
-  std::array<unsigned char, 32> seed_bytes;
-  for (int i = 0; i < 32; i++) {
-    seed_bytes[i] = static_cast<unsigned char>(gen());
-  }
-  RAND_seed(&rng, seed_bytes.size(), reinterpret_cast<char*>(seed_bytes.data()));
-
-  BIG curve_order_copy;
-  BIG_rcopy(curve_order_copy, CURVE_Order);
-  
-  BIG_randomnum(random, curve_order_copy, &rng);
-  RAND_clean(&rng);
 }
 
 kzg::trusted_setup::trusted_setup(const std::string& filename) {
