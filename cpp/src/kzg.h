@@ -41,6 +41,9 @@ public:
   
   poly(ZZ_pX _data) : data(_data) {}
   const ZZ_pX& get_poly() const { return data; }
+  
+  std::vector<uint8_t> serialize();
+  static poly deserialize(const std::vector<uint8_t>&);
 };
 
 class commit {

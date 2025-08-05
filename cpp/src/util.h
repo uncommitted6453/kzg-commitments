@@ -22,5 +22,7 @@ extern void evaluate_polynomial_points(vector<pair<ZZ_p, ZZ_p>>& points, const Z
 extern void generate_random_BIG(BIG& random);
 extern std::vector<uint8_t> serialize_ECP(const ECP& point);
 extern ECP deserialize_ECP(const std::vector<uint8_t>& bytes);
+extern std::vector<uint8_t> serialize_ZZ_pX(const ZZ_pX& poly);
+extern ZZ_pX deserialize_ZZ_pX(const std::vector<uint8_t>& bytes);
 
 #endif

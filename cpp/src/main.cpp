@@ -79,9 +79,18 @@ void example_chunking() {
   if (kzg.verify_proof(commit, proof, verify)) cout << "verified: hello" << endl;
 }
 
+void example_serialize() {
+  kzg::trusted_setup kzg(128);
+  
+  string data = "hello there my name is bob";
+  kzg::blob blob = kzg::blob::from_string(data);
+  kzg::poly poly = kzg::poly::from_blob(blob);
+}
+
 int main(int argc, char *argv[]) {
   // example_program();
   // example_benchmark();
-  example_chunking();
+  // example_chunking();
+  example_serialize();
   return 0;
 }

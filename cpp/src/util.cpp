@@ -117,6 +117,66 @@ ECP deserialize_ECP(const std::vector<uint8_t>& bytes) {
   return point;
 }
 
+
+vector<uint8_t> serialize_ZZ_pX(const ZZ_pX& poly) {
+  std::vector<uint8_t> result;
+  
+  long degree = deg(poly);
+  result.insert(result.end(), 
+                reinterpret_cast<const uint8_t*>(&degree), 
+                reinterpret_cast<const uint8_t*>(&degree) + sizeof(degree));
+  
+  for (long i = 0; i <= degree; i++) {
+    const ZZ& coeff_zz = rep(coeff(poly, i));
+    
+    long num_bytes = NumBytes(coeff_zz);
+    
+    result.insert(result.end(), 
+                  reinterpret_cast<const uint8_t*>(&num_bytes), 
+                  reinterpret_cast<const uint8_t*>(&num_bytes) + sizeof(num_bytes));
+    
+    if (num_bytes > 0) {
+      std::vector<uint8_t> coeff_bytes(num_bytes);
+      BytesFromZZ(coeff_bytes.data(), coeff_zz, num_bytes);
+      result.insert(result.end(), coeff_bytes.begin(), coeff_bytes.end());
+    }
+  }
+  
+  return result;
+}
+
+ZZ_pX deserialize_ZZ_pX(const vector<uint8_t>& bytes) {
+  size_t offset = 0;
+  
+  long degree;
+  std::memcpy(&degree, bytes.data() + offset, sizeof(degree));
+  offset += sizeof(degree);
+  
+  ZZ_pX poly;
+  if (degree >= 0) {
+    poly.SetLength(degree + 1);
+    
+    for (long i = 0; i <= degree; i++) {
+      long num_bytes;
+      std::memcpy(&num_bytes, bytes.data() + offset, sizeof(num_bytes));
+      offset += sizeof(num_bytes);
+      
+      if (num_bytes > 0) {
+        ZZ coeff_zz;
+        ZZFromBytes(coeff_zz, bytes.data() + offset, num_bytes);
+        offset += num_bytes;
+        
+        conv(poly[i], coeff_zz);
+      } else {
+        clear(poly[i]);
+      }
+    }
+  }
+  
+  poly.normalize();
+  return poly;
+}
+
 void linear_roots_and_polyfit(ZZ_pX& result, ZZ_pX& linear_roots, vector<pair<ZZ_p, ZZ_p>>& points) {
   int idx = 0;
   vector<pair<ZZ_p, ZZ_p>> copy = points;
