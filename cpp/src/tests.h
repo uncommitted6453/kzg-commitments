@@ -3,8 +3,8 @@
 
 using namespace std;
 
-void all_tests();
+bool all_tests();
 
-void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify);
+bool general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute);
 
-void main_test();
+bool main_test();
