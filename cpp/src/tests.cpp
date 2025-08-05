@@ -1,12 +1,17 @@
 #include "kzg.h"
 #include "tests.h"
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <tuple>
 #include <utility>
+#include <ctime>
+#include <unistd.h>
 
 bool all_tests() {
-  return main_test();
+  srand((unsigned)time(NULL) * getpid());
+  return random_test();
+  // return main_test();
 }
 
 bool main_test() {
@@ -24,9 +29,29 @@ bool main_test() {
   );
 }
 
+bool random_test() {
+  int length = 10;
+  for (int i = 0; i < 10; ++i) {
+    string data = random_string(length);
+    // Stores indices of the string data such that
+    //   kzg.create_proof(poly, j, k) is a proof for data[j:k]
+    vector<pair<int, int>> to_verify;
+    // Should go up to length instead of length - 1,
+    // but create_proof seg faults when j == 0, and k == length.
+    for (int j = 0; j < length - 1; ++j) {
+      for (int k = j + 1; j + k <= length; ++k) {
+        to_verify.push_back(make_pair(j, k));
+      }
+    }
+    if (!general_test(128, random_string(length), to_verify, {})) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute) {
   bool success = true;
-  cout << "RUNNING TEST\n";
   kzg::trusted_setup kzg(num_coeff);
 
   kzg::blob blob = kzg::blob::from_string(data);
@@ -40,14 +65,14 @@ bool general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, 
   }
 
   for (auto s : to_verify) {
-    kzg::proof s_proof = kzg.create_proof(poly, s.first, s.second);
+    kzg::proof s_proof = kzg.create_proof(poly, s.first, s.second); // SEG FAULT when s.second == len(data) and s.first == 0.
     string substring = data.substr(s.first, s.second);
     kzg::blob verify = kzg::blob::from_string(substring, s.first);
     if (kzg.verify_proof(commit, s_proof, verify)) {
-      cout << "Verified: " << substring << endl;
+      cout << "Verified (" << s.first << ", " << s.second << "): Message is " << data << " and we are proving " << substring  << endl;
     } else {
+      cout << "FAILED   (" << s.first << ", " << s.second << "): Message is " << data << " and we are proving " << substring  << endl;
       success = false;
-      cout << "FAILED to verify: " << substring << endl;
     }
   }
 
@@ -58,10 +83,25 @@ bool general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, 
     if (!kzg.verify_proof(commit, s_proof, refute)) {
       cout << "Refuted: " << get<2>(s) << endl;
     } else {
-      success = false;
       cout << "FAILED to refute: " << get<2>(s) << endl;
+      return false;
     }
   }
-
   return success;
+}
+
+// https://stackoverflow.com/a/440240
+string random_string(const int len) {
+  static const char alphanum[] =
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz";
+  string tmp_s;
+  tmp_s.reserve(len);
+
+  for (int i = 0; i < len; ++i) {
+    tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+  }
+  
+  return tmp_s;
 }
