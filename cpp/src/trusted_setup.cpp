@@ -307,8 +307,7 @@ bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kz
  * @brief Exports the trusted setup to a binary file
  * 
  * Serializes the trusted setup (G1 and G2 group elements) to a binary file
- * for later reuse. The file format contains the number of coefficients
- * followed by serialized G1 elements, then G2 elements.
+ * for later reuse.
  * 
  * @param filename Path where the trusted setup should be exported (default: "kzg_public")
  */
