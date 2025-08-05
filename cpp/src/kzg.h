@@ -8,8 +8,6 @@
 #include <NTL/ZZX.h>
 #include <core.h>
 
-#define MAX_CHUNK_SIZE 19
-
 using namespace std;
 using namespace BN158;
 using namespace B160_56;
@@ -17,6 +15,10 @@ using namespace NTL;
 using namespace core;
 
 namespace kzg {
+
+extern int CURVE_ORDER_BYTES;
+
+extern void init();
 
 class blob {
 private:

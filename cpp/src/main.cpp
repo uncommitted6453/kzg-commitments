@@ -98,6 +98,8 @@ void example_serialize() {
 }
 
 int main(int argc, char *argv[]) {
+  kzg::init();
+  
   // example_program();
   // example_benchmark();
   // example_chunking();

@@ -16,32 +16,16 @@ using namespace B160_56;
 using namespace NTL;
 using namespace core;
 
-void kzg::trusted_setup::generate_elements_range(
-  int start, int end, BIG s_i, BIG s
-) {
-  ECP G1_s_i;
-  ECP_generator(&G1_s_i);
-  PAIR_G1mul(&G1_s_i, s_i);
-  _G1[start] = G1_s_i;
+int kzg::CURVE_ORDER_BYTES;
 
-  ECP2 G2_s_i;
-  ECP2_generator(&G2_s_i);
-  PAIR_G2mul(&G2_s_i, s_i);
-  _G2[start] = G2_s_i;
-
-  for (int i = start + 1; i < end; i++) {
-    PAIR_G1mul(&G1_s_i, s);
-    _G1[i] = G1_s_i;
-    
-    PAIR_G2mul(&G2_s_i, s);
-    _G2[i] = G2_s_i;
-  }
+void kzg::init() {
+  ZZ ZZ_curve_order = ZZ_from_BIG(CURVE_Order);
+  ZZ_p::init(ZZ_curve_order);
+  
+  kzg::CURVE_ORDER_BYTES = NumBytes(ZZ_curve_order);
 }
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
-  ZZ z = ZZ_from_BIG(CURVE_Order);
-  ZZ_p::init(z);
-  
   BIG BIG_s;
   generate_random_BIG(BIG_s);
   ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
@@ -142,6 +126,26 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
+void kzg::trusted_setup::generate_elements_range(int start, int end, BIG s_i, BIG s) {
+  ECP G1_s_i;
+  ECP_generator(&G1_s_i);
+  PAIR_G1mul(&G1_s_i, s_i);
+  _G1[start] = G1_s_i;
+
+  ECP2 G2_s_i;
+  ECP2_generator(&G2_s_i);
+  PAIR_G2mul(&G2_s_i, s_i);
+  _G2[start] = G2_s_i;
+
+  for (int i = start + 1; i < end; i++) {
+    PAIR_G1mul(&G1_s_i, s);
+    _G1[i] = G1_s_i;
+    
+    PAIR_G2mul(&G2_s_i, s);
+    _G2[i] = G2_s_i;
+  }
+}
+
 kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
   return kzg::commit(polyeval_G1(poly.get_poly()));
 }
@@ -194,12 +198,12 @@ ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
 }
 
 kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offset, int byte_length, int chunk_size) {
-  if (chunk_size > MAX_CHUNK_SIZE)
-    throw invalid_argument("chunk size is greater than MAX_CHUNK_SIZE");
+  if (chunk_size > CURVE_ORDER_BYTES - 1)
+    throw invalid_argument("chunk_size must be lower than CURVE_ORDER_BYTES.");
   else if (byte_offset % chunk_size != 0)
-    throw invalid_argument("offset is not a multiple of chunk");
+    throw invalid_argument("byte_offset is not a multiple of chunk_size.");
   else if (byte_length % chunk_size != 0)
-    throw invalid_argument("data size is not a multiple of chunk");
+    throw invalid_argument("byte_length is not a multiple of chun_size.");
   
   return create_proof(poly, byte_offset / chunk_size, byte_length / chunk_size);
 }
