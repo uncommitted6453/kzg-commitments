@@ -193,11 +193,22 @@ ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
   return res;
 }
 
-kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int offset, int length) {
+kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offset, int byte_length, int chunk_size) {
+  if (chunk_size > MAX_CHUNK_SIZE)
+    throw invalid_argument("chunk size is greater than MAX_CHUNK_SIZE");
+  else if (byte_offset % chunk_size != 0)
+    throw invalid_argument("offset is not a multiple of chunk");
+  else if (byte_length % chunk_size != 0)
+    throw invalid_argument("data size is not a multiple of chunk");
+  
+  return create_proof(poly, byte_offset / chunk_size, byte_length / chunk_size);
+}
+
+kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int chunk_offset, int chunk_length) {
   const ZZ_pX& P = poly.get_poly();
   
   vector<pair<ZZ_p, ZZ_p>> points;
-  evaluate_polynomial_points(points, P, offset, length);
+  evaluate_polynomial_points(points, P, chunk_offset, chunk_length);
   
   ZZ_pX I, Z;
   linear_roots_and_polyfit(I, Z, points);
