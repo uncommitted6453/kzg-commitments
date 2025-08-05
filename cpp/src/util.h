@@ -2,17 +2,11 @@
 #define UTIL_H
 
 #include <vector>
-#include <big_B160_56.h>
 #include <NTL/ZZX.h>
-#include <core.h>
-#include <ecp_BN158.h>
-#include <ecp2_BN158.h>
+#include "kzg_config.h"
 
 using namespace std;
-using namespace B160_56;
-using namespace BN158;
 using namespace NTL;
-using namespace core;
 
 extern void BIG_from_ZZ(BIG big, const ZZ& value);
 extern ZZ ZZ_from_BIG(const BIG big);

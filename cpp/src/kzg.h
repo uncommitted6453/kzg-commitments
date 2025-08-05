@@ -1,18 +1,13 @@
 #ifndef KZG_H
 #define KZG_H
 
+#include "kzg_config.h"
+
 #include <vector>
-#include <ecp_BN158.h>
-#include <ecp2_BN158.h>
-#include <big_B160_56.h>
 #include <NTL/ZZX.h>
-#include <core.h>
 
 using namespace std;
-using namespace BN158;
-using namespace B160_56;
 using namespace NTL;
-using namespace core;
 
 namespace kzg {
 

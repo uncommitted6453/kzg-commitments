@@ -4,9 +4,7 @@
 #include "util.h"
 #include <chrono>
 
-using namespace std;
 using namespace std::chrono;
-using namespace NTL;
 
 void example_program() {
   /* ----- setup ------ */
