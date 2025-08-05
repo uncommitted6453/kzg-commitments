@@ -8,6 +8,8 @@
 #include <NTL/ZZX.h>
 #include <core.h>
 
+#define MAX_CHUNK_SIZE 19
+
 using namespace std;
 using namespace BN158;
 using namespace B160_56;
@@ -23,6 +25,7 @@ private:
 public:
   static blob from_string(string s);
   static blob from_string(string s, int offset);
+  static blob from_bytes(const uint8_t* bytes, int offset, int size, int chunk);
   
   blob(vector<pair<ZZ_p, ZZ_p>>& _data) : data(_data) {}
   vector<pair<ZZ_p, ZZ_p>>& get_data() { return data; }
