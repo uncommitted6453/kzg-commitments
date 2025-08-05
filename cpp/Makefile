@@ -1,17 +1,35 @@
-.PHONY=run
+.PHONY=all clean config_bn158
 
-run: kzg-bn158
-	./kzg-bn158
+KZG_SRC=$(wildcard src/*.cpp)
+KZG_OBJ=$(patsubst src/%.cpp, obj/%.o, $(KZG_SRC))
+KZG_LIB=miracl-core/cpp/core.a ntl/src/ntl.a
 
-KZG_SRC=src/*.cpp
-KZG_INCLUDE=-Intl/include -Imiracl-core/cpp
-KZG_LIB=miracl-core/cpp/core.a ntl/src/ntl.a -lgmp
+all: example/example
 
-kzg-bn158: src/*.cpp miracl-core/cpp/config_curve_BN158.h ntl/src/ntl.a
-	g++ $(KZG_SRC) $(KZG_LIB) $(KZG_INCLUDE) -Iconfig/curve_BN158 -o $@
+example/example: example/example.cpp lib/kzg-bn158.a lib/core.a lib/ntl.a
+	g++ example/example.cpp -Iinclude lib/kzg-bn158.a lib/core.a lib/ntl.a -lgmp -o $@
+	./example/example
 
-kzg-bn254: src/*.cpp miracl-core/cpp/config_curve_BN254.h ntl/src/ntl.a
-	g++ $(KZG_SRC) $(KZG_LIB) $(KZG_INCLUDE) -Iconfig/curve_BN254 -o $@
+lib/kzg-bn158.a: config_bn158 ntl/src/ntl.a $(KZG_OBJ) | lib
+	cp ntl/src/ntl.a lib
+	cp -r ntl/include/NTL include
+	ar rvs $@ $(KZG_OBJ)
+
+lib/kzg-bn254.so: src/*.cpp miracl-core/cpp/config_curve_BN254.h ntl/src/ntl.a | lib
+	g++ -fPIC $(KZG_SRC) $(KZG_INCLUDE) -Iconfig/curve_BN158 -shared -o $@
+
+obj/%.o: src/%.cpp | obj
+	g++ -Iinclude -c -o $@ $<
+
+config_bn158: miracl-core/cpp/config_curve_BN158.h | lib include
+	cp miracl-core/cpp/core.a lib
+	cp miracl-core/cpp/*_BN158.h include
+	cp miracl-core/cpp/*_B160_56.h include
+	cp miracl-core/cpp/arch.h include
+	cp miracl-core/cpp/core.h include
+	cp miracl-core/cpp/randapi.h include
+	cp config/kzg.h include/kzg.h
+	cp config/curve_BN158/kzg_config.h include/kzg_config.h
 
 miracl-core/cpp/config_curve_BN158.h:
 	cd miracl-core/cpp && python3 config64.py -o 41
@@ -21,3 +39,15 @@ miracl-core/cpp/config_curve_BN254.h:
 
 ntl/src/ntl.a:
 	cd ntl/src && ./configure && make
+
+obj:
+	mkdir -p obj
+
+lib:
+	mkdir -p lib
+
+include:
+	mkdir -p include
+
+clean:
+	rm -rf include obj lib

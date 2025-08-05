@@ -1,4 +1,4 @@
-#include "kzg.h"
+#include <kzg.h>
 
 #include <fstream>
 #include <cstdint>
