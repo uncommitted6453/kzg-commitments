@@ -89,7 +89,6 @@ void example_serialize() {
   for (int i = 0; i < deg(poly.get_poly()); i++)
       cout << poly.get_poly()[i] << endl;
 
-
   cout << "---------------------------------" << endl;
   vector<uint8_t> bytes = poly.serialize();
 
@@ -99,9 +98,9 @@ void example_serialize() {
 }
 
 int main(int argc, char *argv[]) {
-  example_program();
-  example_benchmark();
-  example_chunking();
-  // example_serialize();
+  // example_program();
+  // example_benchmark();
+  // example_chunking();
+  example_serialize();
   return 0;
 }

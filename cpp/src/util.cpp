@@ -129,16 +129,13 @@ vector<uint8_t> serialize_ZZ_pX(const ZZ_pX& poly) {
   for (long i = 0; i <= degree; i++) {
     const ZZ& coeff_zz = rep(coeff(poly, i));
     
-    long num_bytes = NumBytes(coeff_zz);
-    
-    result.insert(result.end(), 
-                  reinterpret_cast<const uint8_t*>(&num_bytes), 
-                  reinterpret_cast<const uint8_t*>(&num_bytes) + sizeof(num_bytes));
+    uint8_t num_bytes = (uint8_t) NumBytes(coeff_zz);
+    result.push_back(num_bytes);
     
     if (num_bytes > 0) {
-      std::vector<uint8_t> coeff_bytes(num_bytes);
-      BytesFromZZ(coeff_bytes.data(), coeff_zz, num_bytes);
-      result.insert(result.end(), coeff_bytes.begin(), coeff_bytes.end());
+      uint8_t coeff_bytes[MODBYTES_B160_56];
+      BytesFromZZ(coeff_bytes, coeff_zz, num_bytes);
+      result.insert(result.end(), coeff_bytes, coeff_bytes + num_bytes);
     }
   }
   
@@ -157,9 +154,7 @@ ZZ_pX deserialize_ZZ_pX(const vector<uint8_t>& bytes) {
     poly.SetLength(degree + 1);
     
     for (long i = 0; i <= degree; i++) {
-      long num_bytes;
-      std::memcpy(&num_bytes, bytes.data() + offset, sizeof(num_bytes));
-      offset += sizeof(num_bytes);
+      uint8_t num_bytes = bytes[offset++];
       
       if (num_bytes > 0) {
         ZZ coeff_zz;
