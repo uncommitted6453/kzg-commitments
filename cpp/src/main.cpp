@@ -2,6 +2,7 @@
 #include <vector>
 #include "kzg.h"
 #include "util.h"
+#include "tests.h"
 #include <chrono>
 
 using namespace std::chrono;
@@ -106,5 +107,7 @@ int main(int argc, char *argv[]) {
   example_chunking();
   cout << "--------------------------------------------" << endl;
   example_serialize();
+  cout << "--------------------------------------------" << endl;
+  all_tests();
   return 0;
 }
