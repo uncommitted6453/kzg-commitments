@@ -73,7 +73,7 @@ void example_chunking() {
   
   if (kzg.verify_commit(commit, poly)) cout << "verified: commit is correct" << endl;
   
-  kzg::proof proof = kzg.create_proof(poly, 0, 2);
+  kzg::proof proof = kzg.create_proof(poly, 0, 8, 4);
   
   kzg::blob verify = kzg::blob::from_bytes((uint8_t*) "hello th", 0, 8, 4);
   if (kzg.verify_proof(commit, proof, verify)) cout << "verified: hello" << endl;

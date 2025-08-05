@@ -17,19 +17,19 @@ kzg::blob kzg::blob::from_string(string s, int offset) {
   return kzg::blob(data); 
 }
 
-kzg::blob kzg::blob::from_bytes(const uint8_t* bytes, int offset, int size, int chunk) {
-  if (chunk > MAX_CHUNK_SIZE)
+kzg::blob kzg::blob::from_bytes(const uint8_t* bytes, int byte_offset, int byte_length, int chunk_size) {
+  if (chunk_size > MAX_CHUNK_SIZE)
     throw invalid_argument("chunk size is greater than MAX_CHUNK_SIZE");
-  else if (offset % chunk != 0)
+  else if (byte_offset % chunk_size != 0)
     throw invalid_argument("offset is not a multiple of chunk");
-  else if (size % chunk != 0)
+  else if (byte_length % chunk_size != 0)
     throw invalid_argument("data size is not a multiple of chunk");
   
   vector<pair<ZZ_p, ZZ_p>> data;
-  for (int i = offset / chunk; i < size / chunk; i++) {
+  for (int i = byte_offset / chunk_size; i < byte_length / chunk_size; i++) {
     unsigned char chunk_data[MODBYTES_B160_56] = {0};
-    for (int j = 0; j < chunk; j++)
-      chunk_data[j] = bytes[i * chunk + j];
+    for (int j = 0; j < chunk_size; j++)
+      chunk_data[j] = bytes[i * chunk_size + j];
     
     ZZ chunk_scalar;
     ZZFromBytes(chunk_scalar, chunk_data, MODBYTES_B160_56);

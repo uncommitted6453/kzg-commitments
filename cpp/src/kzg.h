@@ -25,7 +25,7 @@ private:
 public:
   static blob from_string(string s);
   static blob from_string(string s, int offset);
-  static blob from_bytes(const uint8_t* bytes, int offset, int size, int chunk);
+  static blob from_bytes(const uint8_t* bytes, int byte_offset, int byte_length, int chunk_size);
   
   blob(vector<pair<ZZ_p, ZZ_p>>& _data) : data(_data) {}
   vector<pair<ZZ_p, ZZ_p>>& get_data() { return data; }
@@ -83,7 +83,8 @@ public:
   commit create_commit(const kzg::poly& poly);
   bool verify_commit(kzg::commit& commit, const kzg::poly& poly);
   
-  proof create_proof(const kzg::poly& poly, int offset, int length);
+  proof create_proof(const kzg::poly& poly, int byte_offset, int byte_length, int chunk_size);
+  proof create_proof(const kzg::poly& poly, int chunk_offset, int chunk_length);
   bool verify_proof(commit& commit, proof& proof, blob& expected_data);
   
   void export_setup(const std::string& filename = "kzg_public");
