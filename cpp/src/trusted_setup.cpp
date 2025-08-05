@@ -15,26 +15,16 @@ static constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_CURVE + 1;
 void kzg::init() {
   ZZ ZZ_curve_order = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(ZZ_curve_order);
-  
   kzg::CURVE_ORDER_BYTES = NumBytes(ZZ_curve_order);
 }
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
-  ZZ z = ZZ_from_BIG(CURVE_Order);
-  ZZ_p::init(z);
-  
   BIG BIG_s;
   generate_random_BIG(BIG_s);
   ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
 
   _G1.resize(num_coeff);
   _G2.resize(num_coeff);
-
-  std::vector<BIG> s_powers(num_coeff);
-  for (int i = 0; i < num_coeff; i++) {
-    ZZ_p s_i = power(s, i);
-    BIG_from_ZZ(s_powers[i], rep(s_i));
-  }
 
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
@@ -51,17 +41,26 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
   for (unsigned int t = 0; t < num_threads; t++) {
     // distribute remaining elements 1 each to first remaining_elements threads
     int num_elements_to_handle = elements_per_thread;
-    if (t < remaining_elements) {
+    if (t < remaining_elements)
       num_elements_to_handle += 1;
-    }
-
+    
+    BIG BIG_s_i;
+    ZZ_p s_i = power(s, start);
+    BIG_from_ZZ(BIG_s_i, rep(s_i));
+    
+    ECP G1_initial;
+    ECP_generator(&G1_initial);
+    PAIR_G1mul(&G1_initial, BIG_s_i);
+    
+    ECP2 G2_initial;
+    ECP2_generator(&G2_initial);
+    PAIR_G2mul(&G2_initial, BIG_s_i);
+    
     int end = start + num_elements_to_handle;
-    if (start < num_coeff) {
-      threads.push_back(std::thread(
-        &kzg::trusted_setup::generate_elements_range, 
-        this, start, end, std::cref(s_powers)
-      ));
-    }
+    threads.push_back(std::thread(
+      &kzg::trusted_setup::generate_elements_range, 
+      this, start, end, G1_initial, G2_initial, BIG_s
+    ));
     start = end;
   }
   
@@ -122,19 +121,13 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
-void kzg::trusted_setup::generate_elements_range(
-  int start, int end, const std::vector<BIG>& s_powers
-) {
+void kzg::trusted_setup::generate_elements_range(int start, int end, ECP G1_s_i, ECP2 G2_s_i, BIG BIG_s) {
   for (int i = start; i < end; i++) {
-    ECP G1_s_i;
-    ECP_generator(&G1_s_i);
-    PAIR_G1mul(&G1_s_i, const_cast<BIG&>(s_powers[i]));
     _G1[i] = G1_s_i;
-
-    ECP2 G2_s_i;
-    ECP2_generator(&G2_s_i);
-    PAIR_G2mul(&G2_s_i, const_cast<BIG&>(s_powers[i]));
+    PAIR_G1mul(&G1_s_i, BIG_s);
+    
     _G2[i] = G2_s_i;
+    PAIR_G2mul(&G2_s_i, BIG_s);
   }
 }
 
