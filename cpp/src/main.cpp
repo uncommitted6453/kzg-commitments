@@ -85,12 +85,23 @@ void example_serialize() {
   string data = "hello there my name is bob";
   kzg::blob blob = kzg::blob::from_string(data);
   kzg::poly poly = kzg::poly::from_blob(blob);
+
+  for (int i = 0; i < deg(poly.get_poly()); i++)
+      cout << poly.get_poly()[i] << endl;
+
+
+  cout << "---------------------------------" << endl;
+  vector<uint8_t> bytes = poly.serialize();
+
+  kzg::poly poly2 = kzg::poly::deserialize(bytes);
+  for (int i = 0; i < deg(poly2.get_poly()); i++)
+      cout << poly2.get_poly()[i] << endl;
 }
 
 int main(int argc, char *argv[]) {
-  // example_program();
-  // example_benchmark();
-  // example_chunking();
-  example_serialize();
+  example_program();
+  example_benchmark();
+  example_chunking();
+  // example_serialize();
   return 0;
 }
