@@ -20,12 +20,21 @@ void kzg::init() {
 }
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
+  ZZ z = ZZ_from_BIG(CURVE_Order);
+  ZZ_p::init(z);
+  
   BIG BIG_s;
   generate_random_BIG(BIG_s);
   ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
 
   _G1.resize(num_coeff);
   _G2.resize(num_coeff);
+
+  std::vector<BIG> s_powers(num_coeff);
+  for (int i = 0; i < num_coeff; i++) {
+    ZZ_p s_i = power(s, i);
+    BIG_from_ZZ(s_powers[i], rep(s_i));
+  }
 
   unsigned int num_threads = std::thread::hardware_concurrency();
   if (num_threads == 0) {
@@ -48,13 +57,9 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
 
     int end = start + num_elements_to_handle;
     if (start < num_coeff) {
-      BIG BIG_s_i;
-      ZZ_p s_i = power(s, start);
-      BIG_from_ZZ(BIG_s_i, rep(s_i));
-
       threads.push_back(std::thread(
         &kzg::trusted_setup::generate_elements_range, 
-        this, start, end, BIG_s_i, BIG_s
+        this, start, end, std::cref(s_powers)
       ));
     }
     start = end;
@@ -117,25 +122,22 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
-void kzg::trusted_setup::generate_elements_range(int start, int end, BIG s_i, BIG s) {
-  ECP G1_s_i;
-  ECP_generator(&G1_s_i);
-  PAIR_G1mul(&G1_s_i, s_i);
-  _G1[start] = G1_s_i;
-
-  ECP2 G2_s_i;
-  ECP2_generator(&G2_s_i);
-  PAIR_G2mul(&G2_s_i, s_i);
-  _G2[start] = G2_s_i;
-
-  for (int i = start + 1; i < end; i++) {
-    PAIR_G1mul(&G1_s_i, s);
+void kzg::trusted_setup::generate_elements_range(
+  int start, int end, const std::vector<BIG>& s_powers
+) {
+  for (int i = start; i < end; i++) {
+    ECP G1_s_i;
+    ECP_generator(&G1_s_i);
+    PAIR_G1mul(&G1_s_i, const_cast<BIG&>(s_powers[i]));
     _G1[i] = G1_s_i;
-    
-    PAIR_G2mul(&G2_s_i, s);
+
+    ECP2 G2_s_i;
+    ECP2_generator(&G2_s_i);
+    PAIR_G2mul(&G2_s_i, const_cast<BIG&>(s_powers[i]));
     _G2[i] = G2_s_i;
   }
 }
+
 
 kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
   return kzg::commit(polyeval_G1(poly.get_poly()));
