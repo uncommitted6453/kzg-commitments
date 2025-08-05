@@ -15,14 +15,10 @@ static constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_CURVE + 1;
 void kzg::init() {
   ZZ ZZ_curve_order = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(ZZ_curve_order);
-  
   kzg::CURVE_ORDER_BYTES = NumBytes(ZZ_curve_order);
 }
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
-  ZZ z = ZZ_from_BIG(CURVE_Order);
-  ZZ_p::init(z);
-  
   BIG BIG_s;
   generate_random_BIG(BIG_s);
   ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
