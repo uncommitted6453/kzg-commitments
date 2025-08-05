@@ -1,8 +1,5 @@
 #include "kzg.h"
 
-#include <fp12_BN158.h>
-#include <pair_BN158.h>
-#include <big_B160_56.h>
 #include <fstream>
 #include <cstdint>
 #include <thread>
@@ -10,13 +7,10 @@
 #include <functional>
 #include "util.h"
 
-using namespace std;
-using namespace BN158;
-using namespace B160_56;
-using namespace NTL;
-using namespace core;
-
 int kzg::CURVE_ORDER_BYTES;
+
+static constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_CURVE + 1;
+static constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_CURVE + 1;
 
 void kzg::init() {
   ZZ ZZ_curve_order = ZZ_from_BIG(CURVE_Order);
@@ -74,9 +68,6 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
 kzg::trusted_setup::trusted_setup(const std::string& filename) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
-  
-  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
-  constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_B160_56 + 1;
   
   std::ifstream file(filename, std::ios::in | std::ios::binary);
   if (!file.is_open()) {
@@ -248,9 +239,6 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
     std::cerr << "failed to export" << std::endl;
     return;
   }
-  
-  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
-  constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_B160_56 + 1;
   
   uint64_t num_coeffs = static_cast<uint64_t>(_G1.size());
   file.write(reinterpret_cast<const char*>(&num_coeffs), sizeof(num_coeffs));

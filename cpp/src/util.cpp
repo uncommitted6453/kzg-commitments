@@ -9,12 +9,6 @@
 
 #define FAST_MULTIEVAL_THRESHOLD 140
 
-using namespace std;
-using namespace B160_56;
-using namespace BN158;
-using namespace NTL;
-using namespace core;
-
 static ZZ_pX build_linear_roots_tree(
   vector<ZZ_pX>& linear_roots,
   vector<pair<ZZ_p, ZZ_p>>& points,
@@ -35,32 +29,32 @@ static ZZ_pX polyfit_R(
 );
 
 void BIG_from_ZZ(BIG big, const ZZ& value) {
-  unsigned char data[MODBYTES_B160_56];
-  BytesFromZZ(data, value, MODBYTES_B160_56);
+  unsigned char data[MODBYTES_CURVE];
+  BytesFromZZ(data, value, MODBYTES_CURVE);
   
   int a = 0;
-  int b = MODBYTES_B160_56 - 1;
+  int b = MODBYTES_CURVE - 1;
   
   while (a < b) {
     swap<unsigned char>(data[a++], data[b--]);
   }
   
-  BIG_fromBytesLen(big, (char*) data, MODBYTES_B160_56);
+  BIG_fromBytesLen(big, (char*) data, MODBYTES_CURVE);
 }
 
 ZZ ZZ_from_BIG(const BIG big) {
-  unsigned char data[MODBYTES_B160_56];
+  unsigned char data[MODBYTES_CURVE];
   BIG_toBytes((char*) data, (int64_t*) big);
   
   int a = 0;
-  int b = MODBYTES_B160_56 - 1;
+  int b = MODBYTES_CURVE - 1;
   
   while (a < b) {
     swap<unsigned char>(data[a++], data[b--]);
   }
   
   ZZ res;
-  ZZFromBytes(res, data, MODBYTES_B160_56);
+  ZZFromBytes(res, data, MODBYTES_CURVE);
   
   return res;
 }
@@ -82,7 +76,7 @@ void generate_random_BIG(BIG& random) {
 }
 
 std::vector<uint8_t> serialize_ECP(const ECP& point) {
-  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
+  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_CURVE + 1;
   char buffer[G1_OCTET_SIZE];
   octet oct = {0, G1_OCTET_SIZE, buffer};
   ECP_toOctet(&oct, const_cast<ECP*>(&point), false);
@@ -100,7 +94,7 @@ std::vector<uint8_t> serialize_ECP(const ECP& point) {
 }
 
 ECP deserialize_ECP(const std::vector<uint8_t>& bytes) {
-  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
+  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_CURVE + 1;
   
   uint32_t len;
   std::memcpy(&len, bytes.data(), sizeof(len));
@@ -133,7 +127,7 @@ vector<uint8_t> serialize_ZZ_pX(const ZZ_pX& poly) {
     result.push_back(num_bytes);
     
     if (num_bytes > 0) {
-      uint8_t coeff_bytes[MODBYTES_B160_56];
+      uint8_t coeff_bytes[MODBYTES_CURVE];
       BytesFromZZ(coeff_bytes, coeff_zz, num_bytes);
       result.insert(result.end(), coeff_bytes, coeff_bytes + num_bytes);
     }

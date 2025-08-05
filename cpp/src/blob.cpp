@@ -27,12 +27,12 @@ kzg::blob kzg::blob::from_bytes(const uint8_t* bytes, int byte_offset, int byte_
   
   vector<pair<ZZ_p, ZZ_p>> data;
   for (int i = byte_offset / chunk_size; i < byte_length / chunk_size; i++) {
-    unsigned char chunk_data[MODBYTES_B160_56] = {0};
+    unsigned char chunk_data[MODBYTES_CURVE] = {0};
     for (int j = 0; j < chunk_size; j++)
       chunk_data[j] = bytes[i * chunk_size + j];
     
     ZZ chunk_scalar;
-    ZZFromBytes(chunk_scalar, chunk_data, MODBYTES_B160_56);
+    ZZFromBytes(chunk_scalar, chunk_data, MODBYTES_CURVE);
     
     ZZ_p ZZ_x, ZZ_y;
     ZZ_x = i;

@@ -87,7 +87,8 @@ void example_serialize() {
   for (int i = 0; i < deg(poly.get_poly()); i++)
       cout << poly.get_poly()[i] << endl;
 
-  cout << "---------------------------------" << endl;
+  cout << "vvvvvvv" << endl;
+  
   vector<uint8_t> bytes = poly.serialize();
 
   kzg::poly poly2 = kzg::poly::deserialize(bytes);
@@ -98,9 +99,12 @@ void example_serialize() {
 int main(int argc, char *argv[]) {
   kzg::init();
   
-  // example_program();
-  // example_benchmark();
-  // example_chunking();
+  example_program();
+  cout << "--------------------------------------------" << endl;
+  example_benchmark();
+  cout << "--------------------------------------------" << endl;
+  example_chunking();
+  cout << "--------------------------------------------" << endl;
   example_serialize();
   return 0;
 }

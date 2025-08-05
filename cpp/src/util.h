@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <NTL/ZZX.h>
-#include "kzg_config.h"
+#include <kzg_config.h>
 
 using namespace std;
 using namespace NTL;

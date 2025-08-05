@@ -1,7 +1,7 @@
 #ifndef KZG_H
 #define KZG_H
 
-#include "kzg_config.h"
+#include <kzg_config.h>
 
 #include <vector>
 #include <NTL/ZZX.h>
