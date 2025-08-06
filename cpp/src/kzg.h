@@ -76,6 +76,7 @@ private:
   ECP2 polyeval_G2(const ZZ_pX& P);
 
   void generate_elements_range(int start, int end, const std::vector<BIG>& s_powers);
+
 public:
   trusted_setup(int num_coeff);
   trusted_setup(const std::string& filename);
