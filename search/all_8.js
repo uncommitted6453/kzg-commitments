@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['verify_5fcommit_0',['verify_commit',['../classkzg_1_1trusted__setup.html#a090585536b780875848d309d1654c28f',1,'kzg::trusted_setup']]],
-  ['verify_5fproof_1',['verify_proof',['../classkzg_1_1trusted__setup.html#a8f48dd7a9053701f6c5e74e664a43b05',1,'kzg::trusted_setup']]]
+  ['serialize_0',['serialize',['../classkzg_1_1poly.html#a3889b0abbf8a780d03d7442595d82b4b',1,'kzg::poly::serialize()'],['../classkzg_1_1commit.html#ae1e27cc7358e1e6c5c24d7546b0da704',1,'kzg::commit::serialize()'],['../classkzg_1_1proof.html#a24117f320de0721d151d90136e8125c8',1,'kzg::proof::serialize()']]]
 ];

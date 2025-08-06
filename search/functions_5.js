@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['trusted_5fsetup_0',['trusted_setup',['../classkzg_1_1trusted__setup.html#a97856a36959ce53d238cc273edca9b50',1,'kzg::trusted_setup::trusted_setup(int num_coeff)'],['../classkzg_1_1trusted__setup.html#a8d070d6ba980422341fda6067d0472a9',1,'kzg::trusted_setup::trusted_setup(const std::string &amp;filename)']]]
+  ['serialize_0',['serialize',['../classkzg_1_1poly.html#a3889b0abbf8a780d03d7442595d82b4b',1,'kzg::poly::serialize()'],['../classkzg_1_1commit.html#ae1e27cc7358e1e6c5c24d7546b0da704',1,'kzg::commit::serialize()'],['../classkzg_1_1proof.html#a24117f320de0721d151d90136e8125c8',1,'kzg::proof::serialize()']]]
 ];
