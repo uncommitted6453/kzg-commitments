@@ -18,12 +18,12 @@ kzg::blob kzg::blob::from_string(string s, int offset) {
 }
 
 kzg::blob kzg::blob::from_bytes(const uint8_t* bytes, int byte_offset, int byte_length, int chunk_size) {
-  if (chunk_size > CURVE_ORDER_BYTES - 1)
-    throw invalid_argument("chunk_size must be lower than CURVE_ORDER_BYTES.");
+  if (chunk_size > MAX_CHUNK_BYTES)
+    throw invalid_argument("chunk_size must be lower than MAX_CHUNK_BYTES.");
   else if (byte_offset % chunk_size != 0)
     throw invalid_argument("byte_offset is not a multiple of chunk_size.");
   else if (byte_length % chunk_size != 0)
-    throw invalid_argument("byte_length is not a multiple of chun_size.");
+    throw invalid_argument("byte_length is not a multiple of chunk_size.");
   
   vector<pair<ZZ_p, ZZ_p>> data;
   for (int i = byte_offset / chunk_size; i < byte_length / chunk_size; i++) {
