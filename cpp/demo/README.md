@@ -60,3 +60,33 @@ The peer actions are defined through bash scripts in their respective files.
 In shared, the `kzg-cli.cpp` program provides an executable CLI interface which bash scritps can interface with.
 To run this demo, ensure that `kzg-cli` has been built by running `make` in the root directory.
 Then to run the `./run-demo` script.
+
+## Details
+
+The `ledger-publish`, `ledger-read`, `ledger-top` scripts provide an interface
+for each peer to interface with a ledger. In this case, for the sake of
+simplcitiy, the ledger operations simpley write or read to a file, named by the block number.
+To view the contents of the ledger, you can view the files in `shared/ledger`.
+
+The data in each ledger block are loosely defined to simply provide an example for our demonstrations.
+For clarity, we will define the arguments in each block type.
+
+```
+host_request [file-name] [file-kzg-commit] [hosting-period] [proof-of-balance]
+  A peer is reqests other peers to download the specified file and host it for
+  distribution over the given period of time. Since peers are compensated are
+  doing so, the requestee must stake some proof of balance to be transferred
+  for this contract.
+random [seed]
+  This generates a distributed and agreed upon source of randomness which also tracks time.
+  To prove that an operation was performed at a certain time, and not pre-generated locally,
+  data should agree with this value.
+file_proof [host-request-block] [section-kzg-proof] [chunk-offset] [chunk-data]
+  Using the previously defined random seed, the peer fufilling the host
+  request, determines an agreed upon subsection of the file the hostee must
+  prove they have.
+transfer-to [peer] using [host-request-block] proof [file_proof-blocks]+
+  A peer can pay another peer by citing their fufillment of a request as a proof of balance.
+  Using the properties of KZG, another peer can verify the contract has been
+  fufilled without even without access to the entirety of the file.
+```
