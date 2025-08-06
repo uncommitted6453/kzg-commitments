@@ -2,6 +2,8 @@
 #include <vector>
 #include <kzg.h>
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 #include <chrono>
 #include <iterator>
 
@@ -14,6 +16,7 @@ void trusted_setup() {
   kzg::trusted_setup kzg(num_coeffs);
   auto t_stop = high_resolution_clock::now();
   auto duration = duration_cast<microseconds>(t_stop - t_start);
+
   cout << "KZG trusted setup generated in " << duration.count() / 1000000.0 << "s" << endl;
   cout << "  num_coeffs=" << num_coeffs << endl;
   cout << "  max_commit_bytes=" << num_coeffs * (kzg::CURVE_ORDER_BYTES - 1) << endl;
@@ -21,9 +24,18 @@ void trusted_setup() {
   kzg.export_setup();
 }
 
-int main(int argc, char *argv[]) {
-  kzg::init();
-  
+string to_hex(vector<uint8_t>& bytes) {
+  stringstream ss;
+
+  for (uint8_t byte : bytes)
+    ss << hex << setw(2) << setfill('0') << (unsigned int) byte;
+
+  cout << ss.str() << endl;
+
+  return "";
+}
+
+void commit_file() {
   kzg::trusted_setup kzg("kzg_public");
   
   std::ifstream file("document.txt", std::ios::in | std::ios::binary);
@@ -41,14 +53,23 @@ int main(int argc, char *argv[]) {
   kzg::blob blob = kzg::blob::from_bytes(bytes.data(), 0, bytes.size(), chunk_size);
   kzg::poly poly = kzg::poly::from_blob(blob);
   kzg::commit commit = kzg.create_commit(poly);
+
+  vector<uint8_t> commit_bytes = commit.serialize();
+  string commit_hex = to_hex(commit_bytes);
+
+  // vector<uint8_t> verify_bytes;
+  // for (int i = 0; i < chunk_size * 3; i++)
+  //   verify_bytes.push_back(bytes[i]);
+  // 
+  // kzg::proof proof = kzg.create_proof(poly, 0, 3);
+  // kzg::blob verify = kzg::blob::from_bytes(verify_bytes.data(), 0, verify_bytes.size(), chunk_size);
+  // if (kzg.verify_proof(commit, proof, verify)) cout << "verified: hello" << endl;
+}
+
+int main(int argc, char *argv[]) {
+  kzg::init();
   
-  vector<uint8_t> verify_bytes;
-  for (int i = 0; i < chunk_size * 3; i++)
-    verify_bytes.push_back(bytes[i]);
-  
-  kzg::proof proof = kzg.create_proof(poly, 0, 3);
-  kzg::blob verify = kzg::blob::from_bytes(verify_bytes.data(), 0, verify_bytes.size(), chunk_size);
-  if (kzg.verify_proof(commit, proof, verify)) cout << "verified: hello" << endl;
+  commit_file();
   
   return 0;
 }
