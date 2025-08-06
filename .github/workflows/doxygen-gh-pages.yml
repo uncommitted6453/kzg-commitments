@@ -16,9 +16,8 @@ jobs:
         with:
           doxyfile-path: 'cpp/Doxyfile'
 
-      - run: touch docs/html/.nojekyll
-
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/html
+          enable_jekyll: false
