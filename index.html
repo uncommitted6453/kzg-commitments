@@ -120,19 +120,17 @@ Quick Start Guide</h1>
 <div class="ttc" id="aclasskzg_1_1poly_html_a01c60a35ee025ed7143b6afdee7d2049"><div class="ttname"><a href="classkzg_1_1poly.html#a01c60a35ee025ed7143b6afdee7d2049">kzg::poly::from_blob</a></div><div class="ttdeci">static poly from_blob(blob blob)</div><div class="ttdoc">Constructs a polynomial fitting the evaluation points in a blob.</div><div class="ttdef"><b>Definition:</b> poly.cpp:4</div></div>
 </div><!-- fragment --><h2><a class="anchor" id="proofs"></a>
 3. Generate and Verify Proofs</h2>
-<div class="fragment"><div class="line">    <span class="comment">// Generate a proof for evaluation at a specific point</span></div>
-<div class="line">    ZZ_p evaluation_point = random_ZZ_p();</div>
-<div class="line">    <a class="code hl_class" href="classkzg_1_1proof.html">kzg::proof</a> proof = <a class="code hl_namespace" href="namespacekzg.html">kzg</a>.create_proof(poly, evaluation_point);</div>
+<div class="fragment"><div class="line">    <span class="comment">// Generate a proof that the polynomial matches the </span></div>
+<div class="line">    <span class="comment">// evaluation points for &quot;hello&quot; at the beginning of the string.</span></div>
+<div class="line">    <a class="code hl_class" href="classkzg_1_1blob.html">kzg::blob</a> verify = <a class="code hl_function" href="classkzg_1_1blob.html#a4daa5938dfc52dc07c392ef64dcde2a9">kzg::blob::from_string</a>(<span class="stringliteral">&quot;hello&quot;</span>, 0);</div>
 <div class="line">    </div>
 <div class="line">    <span class="comment">// Verify the proof</span></div>
-<div class="line">    ZZ_p evaluation = poly.evaluate_at(evaluation_point);</div>
-<div class="line">    <span class="keywordflow">if</span> (<a class="code hl_namespace" href="namespacekzg.html">kzg</a>.verify_proof(commit, proof, evaluation_point, evaluation)) {</div>
+<div class="line">    <span class="keywordflow">if</span> (<a class="code hl_namespace" href="namespacekzg.html">kzg</a>.verify_proof(commit, hello_proof, verify)) {</div>
 <div class="line">        cout &lt;&lt; <span class="stringliteral">&quot;Proof verified successfully!&quot;</span> &lt;&lt; endl;</div>
 <div class="line">    }</div>
 <div class="line">    </div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
-<div class="ttc" id="aclasskzg_1_1proof_html"><div class="ttname"><a href="classkzg_1_1proof.html">kzg::proof</a></div><div class="ttdef"><b>Definition:</b> kzg.h:153</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="api_reference"></a>
 API Reference</h1>
 <h2><a class="anchor" id="key_functions"></a>
