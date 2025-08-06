@@ -40,15 +40,15 @@ benchmark_curve() {
     
     # Step 1: Clean the build
     print_status "Cleaning previous build..."
-    make clean > /dev/null 2>&1
+    make clean
     
     # Step 2: Build the specific curve library
     print_status "Building KZG library for $curve..."
-    make lib/kzg-$curve.a > /dev/null 2>&1
+    make lib/kzg-$curve.a
     
     # Step 3: Build benchmark linking against the specific curve
     print_status "Building benchmark for $curve..."
-    make benchmark/benchmark-$curve > /dev/null 2>&1
+    make benchmark/benchmark-$curve
     
     # Step 4: Run the benchmark
     print_status "Running benchmark for $curve..."
