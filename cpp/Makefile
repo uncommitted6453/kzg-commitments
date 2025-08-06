@@ -5,7 +5,11 @@ KZG_H=$(wildcard src/*.h)
 KZG_OBJ=$(patsubst src/%.cpp, obj/%.o, $(KZG_SRC))
 KZG_LIB=miracl-core/cpp/core.a ntl/src/ntl.a
 
-all: example/example
+all: testing/testing
+
+testing/testing: testing/testing.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
+	g++ testing/testing.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
+	./testing/testing
 
 example/example: example/example.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
 	g++ example/example.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
