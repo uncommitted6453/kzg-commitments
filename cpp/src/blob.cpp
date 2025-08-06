@@ -1,4 +1,4 @@
-#include "kzg.h"
+#include <kzg.h>
 
 kzg::blob kzg::blob::from_string(string s) {
   return kzg::blob::from_string(s, 0);
