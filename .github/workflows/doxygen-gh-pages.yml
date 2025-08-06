@@ -16,8 +16,7 @@ jobs:
         with:
           doxyfile-path: 'cpp/Doxyfile'
 
-      - name: Add .nojekyll file to output directory
-        run: touch docs/html
+      - run: touch docs/html/.nojekyll
 
       - uses: peaceiris/actions-gh-pages@v4
         with:
