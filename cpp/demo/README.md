@@ -53,6 +53,10 @@ section which similarly does not scale in relation to file size.
 
 Hence, the use of KZG in this exchange correctly and efficiently satisfies the protocol requirements.
 
-## Example
+## Technical Demo
 
-
+We implement a simplified demonstration of this protocol.
+The peer actions are defined through bash scripts in their respective files.
+In shared, the `kzg-cli.cpp` program provides an executable CLI interface which bash scritps can interface with.
+To run this demo, ensure that `kzg-cli` has been built by running `make` in the root directory.
+Then to run the `./run-demo` script.
