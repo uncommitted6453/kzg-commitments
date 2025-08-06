@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 request_block=$(cat request_block)
 top_block=$(ledger-top)

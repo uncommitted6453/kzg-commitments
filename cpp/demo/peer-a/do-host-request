@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "[Peer A] creating KZG commit of document.txt."
 

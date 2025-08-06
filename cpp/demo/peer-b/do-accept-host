@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 top_block=$(ledger-top)
 host_request=$(ledger-read $top_block)
