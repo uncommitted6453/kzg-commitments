@@ -9,6 +9,21 @@
 using namespace std;
 using namespace NTL;
 
+/**
+ * @namespace kzg
+ * @brief KZG polynomial commitment scheme functions.
+ * 
+ * This namespace contains all classes and functions necessary for producing and verifying
+ * KZG commitments. 
+ * 
+ * The main workflow involves:
+ * 1. Initializing the library with kzg::init()
+ * 2. Creating a trusted setup using kzg::trusted_setup
+ * 3. Converting your data to a blob using kzg::blob
+ * 4. Generating a polynomial from the blob using kzg::poly
+ * 5. Creating commitments and proofs using the trusted setup
+ * 6. Verifying the commitments and proofs
+ */
 namespace kzg {
 
 extern int CURVE_ORDER_BYTES;
@@ -179,7 +194,7 @@ public:
   * parameter num_coeff determines the maximum degree of polynomials 
   * that can be committed with the setup. 
   * 
-  * @param num_coeff The number of group elements to generate
+  * @param num_coeff The number of group elements to generate. The maximum value for num_coeff is MAX_CHUNK_BYTES.
   */
   trusted_setup(int num_coeff);
   
@@ -222,7 +237,7 @@ public:
   * @param poly The polynomial to create a proof for
   * @param byte_offset Starting byte position (must be multiple of chunk_size)
   * @param byte_length Number of bytes to prove (must be multiple of chunk_size)
-  * @param chunk_size Size of each chunk in bytes (must be < CURVE_ORDER_BYTES)
+  * @param chunk_size Size of each chunk in bytes (must be less than MAX_CHUNK_BYTES)
   * @return A KZG proof object
   * @throws invalid_argument if parameters don't meet the required constraints
   */

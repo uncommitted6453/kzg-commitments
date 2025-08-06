@@ -1,0 +1,98 @@
+/**
+ * @mainpage KZG Commitments Library - Getting Started
+ * 
+ * @section overview Overview
+ * 
+ * This library provides an implementation of the KZG (Kate-Zaverucha-Goldberg) polynomial commitment scheme.
+ * 
+ * @section installation Installation
+ * 
+ * Run the following to build the library:
+ * 
+ * @code
+ * git clone --recurse-submodules -j8 https://github.com/uncommitted6453/kzg-commitments.git
+ * cd kzg-commitments/cpp
+ * make
+ * @endcode
+ * 
+ * Then, copy the contents of the generated lib and include folders into your project and link them when compiling 
+ * with your toolchain. For example, with g++ it might look like:
+ * @code
+ * g++ my-project.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o a.out
+ * @endcode
+ * 
+ * @section quickstart Quick Start Guide
+ * 
+ * Here's a simple example demonstrating the basic usage of the KZG commitment library:
+ * 
+ * @subsection initialization 1. Initialize the Library
+ * 
+ * @code{.cpp}
+ * #include <kzg.h>
+ * 
+ * int main() {
+ *     // Initialize the library (must be called first)
+ *     kzg::init();
+ *     
+ *     // Create a trusted setup with 128 powers
+ *     kzg::trusted_setup kzg(128);
+ * @endcode
+ * 
+ * @subsection commitment 2. Create a Commitment
+ * 
+ * @code{.cpp}
+ *     // Create data and convert to polynomial
+ *     string data = "hello there my name is bob";
+ *     kzg::blob blob = kzg::blob::from_string(data);
+ *     kzg::poly poly = kzg::poly::from_blob(blob);
+ *     
+ *     // Create commitment to the polynomial
+ *     kzg::commit commit = kzg.create_commit(poly);
+ *     
+ *     // Verify the commitment
+ *     if (kzg.verify_commit(commit, poly)) {
+ *         cout << "Commitment verified successfully!" << endl;
+ *     }
+ * @endcode
+ * 
+ * @subsection proofs 3. Generate and Verify Proofs
+ * 
+ * @code{.cpp}
+ *     // Generate a proof for evaluation at a specific point
+ *     ZZ_p evaluation_point = random_ZZ_p();
+ *     kzg::proof proof = kzg.create_proof(poly, evaluation_point);
+ *     
+ *     // Verify the proof
+ *     ZZ_p evaluation = poly.evaluate_at(evaluation_point);
+ *     if (kzg.verify_proof(commit, proof, evaluation_point, evaluation)) {
+ *         cout << "Proof verified successfully!" << endl;
+ *     }
+ *     
+ *     return 0;
+ * }
+ * @endcode
+ * 
+ * @section api_reference API Reference
+ * 
+ * @subsection key_functions Key Functions
+ * 
+ * - kzg::init() - Initialize the library (must be called first)
+ * - kzg::trusted_setup::create_commit() - Create a commitment to a polynomial
+ * - kzg::trusted_setup::verify_commit() - Verify a commitment
+ * - kzg::trusted_setup::create_proof() - Generate an evaluation proof
+ * - kzg::trusted_setup::verify_proof() - Verify an evaluation proof
+ *
+ * @subsection main_classes Classes
+ * 
+ * - kzg::trusted_setup - Manages the trusted setup and commitment/proof operations
+ * - kzg::blob - Represents raw data
+ * - kzg::poly - Represents polynomials
+ * - kzg::commit - Represents polynomial commitments
+ * - kzg::proof - Represents evaluation proofs
+ * 
+ * @section example Example
+ * 
+ * For a more detailed example, see:
+ * - @ref example.cpp "Complete Example" - Full working example
+ * 
+*/
