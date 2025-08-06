@@ -1,13 +1,13 @@
 #include <iostream>
-#include <vector>
 #include <kzg.h>
 #include <chrono>
 #include <random>
 #include <string>
+#include <iomanip>
 
 using namespace std::chrono;
 
-string generateRandomString(double length)
+string generateRandomString(int length)
 {
   const string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
   random_device rd;
@@ -17,86 +17,60 @@ string generateRandomString(double length)
   string random_string;
   random_string.reserve(length);
 
-  for (double i = 0; i < length; ++i)
+  for (int i = 0; i < length; ++i)
   {
     random_string += characters[distribution(generator)];
   }
   return random_string;
-};
-
-void data_benchmark()
-{
-  kzg::trusted_setup kzg(128);
-
-  vector<double> sizes = {16, 32, 64, 128, 256};
-  for (double size : sizes)
-  {
-    string data = generateRandomString(size);
-
-    auto t_start = high_resolution_clock::now();
-
-    kzg::blob blob = kzg::blob::from_string(data);
-    kzg::poly poly = kzg::poly::from_blob(blob);
-    kzg::commit commit = kzg.create_commit(poly);
-
-    auto t_stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(t_stop - t_start);
-    cout << "commit took " << duration.count() << " microseconds for size " << size << endl;
-  }
 }
 
-void setup_benchmark()
+void benchmark_polynomial_degree(int max_degree)
 {
-  vector<double> sizes = {128, 256, 512, 1024, 2048};
-  for (double size : sizes)
-  {
-    auto t_start = high_resolution_clock::now();
-    kzg::trusted_setup kzg(size);
-    auto t_stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(t_stop - t_start);
-    cout << "setup took " << duration.count() << " microseconds for size " << size << endl;
-  }
-}
-
-void verification_benchmark()
-{
-  kzg::trusted_setup kzg(128);
-
-  vector<double> sizes = {16, 32, 64, 110, 256};
-  for (double size : sizes)
-  {
-    string rand_str1 = generateRandomString(size);
-    string rand_str2 = generateRandomString(size);
-
-    string data = rand_str1 + rand_str2;
-    kzg::blob blob = kzg::blob::from_string(data);
-    kzg::poly poly = kzg::poly::from_blob(blob);
-    kzg::commit commit = kzg.create_commit(poly);
-
-    auto t_start = high_resolution_clock::now();
-
-    // create proof for first rand_str.length() chars
-    kzg::proof hello_proof = kzg.create_proof(poly, 0, rand_str1.length());
-    // verify committed message starts with rand_str1
-    kzg::blob verify_target = kzg::blob::from_string(rand_str1, 0);
-    if (kzg.verify_proof(commit, hello_proof, verify_target)) {
-      auto t_stop = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>(t_stop - t_start);
-      cout << "verification took " << duration.count() << " microseconds for size " << size << endl;
-    }
-    else {
-      cout << "verification failed for size" << size << "!" << endl;
-    }
-  }
+  cout << "Degree " << std::setw(4) << max_degree << ": ";
+  
+  // Measure setup time
+  auto setup_start = high_resolution_clock::now();
+  kzg::trusted_setup kzg(max_degree);
+  auto setup_end = high_resolution_clock::now();
+  auto setup_duration = duration_cast<microseconds>(setup_end - setup_start);
+  
+  // Prepare test data
+  string rand_str1 = generateRandomString(32);
+  string rand_str2 = generateRandomString(32);
+  kzg::blob blob = kzg::blob::from_string(rand_str1 + rand_str2);
+  kzg::poly poly = kzg::poly::from_blob(blob);
+  
+  // Measure commit time
+  auto commit_start = high_resolution_clock::now();
+  kzg::commit commit = kzg.create_commit(poly);
+  auto commit_end = high_resolution_clock::now();
+  auto commit_duration = duration_cast<microseconds>(commit_end - commit_start);
+  
+  // Prepare verification data
+  kzg::proof proof = kzg.create_proof(poly, 0, rand_str1.length());
+  kzg::blob verify_target = kzg::blob::from_string(rand_str1, 0);
+  
+  // Measure verification time
+  auto verify_start = high_resolution_clock::now();
+  bool verification_result = kzg.verify_proof(commit, proof, verify_target);
+  auto verify_end = high_resolution_clock::now();
+  auto verify_duration = duration_cast<microseconds>(verify_end - verify_start);
+  
+  // Output results in compact format
+  cout << "Setup: " << std::setw(6) << setup_duration.count() << "μs | "
+       << "Commit: " << std::setw(5) << commit_duration.count() << "μs | "
+       << "Verify: " << std::setw(5) << verify_duration.count() << "μs | "
+       << (verification_result ? "✓" : "✗") << endl;
 }
 
 int main(int argc, char *argv[])
 {
   kzg::init();
-
-  data_benchmark();
-  setup_benchmark();
-  verification_benchmark();
-
+  
+  // Test different polynomial degrees using a for loop
+  for (int degree = 128; degree <= 4096; degree *= 2) {
+    benchmark_polynomial_degree(degree);
+  }
+  
   return 0;
 }
