@@ -73,7 +73,7 @@ miracl-core/cpp/config_curve_BN254.h:
 	cd miracl-core/cpp && python3 config64.py -o 28
 
 miracl-core/cpp/config_curve_BLS12381.h:
-	cd miracl-core/cpp && python3 config64.py -o 28
+	cd miracl-core/cpp && python3 config64.py -o 31
 
 include/kzg.h:
 	cp src/kzg.h include
