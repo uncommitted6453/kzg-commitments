@@ -178,6 +178,12 @@ bool kzg::trusted_setup::verify_commit(kzg::commit& commit, const kzg::poly& pol
 }
 
 ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
+  if (deg(P) == -1) {
+    ECP inf;
+    ECP_inf(&inf);
+    return inf;
+  }
+
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -199,6 +205,12 @@ ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
 }
 
 ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
+  if (deg(P) == -1) {
+    ECP2 inf;
+    ECP2_inf(&inf);
+    return inf;
+  }
+
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
