@@ -211,6 +211,9 @@ kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offs
 }
 
 kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int chunk_offset, int chunk_length) {
+  if (chunk_length < 1)
+      throw invalid_argument("chunk_length must be 1 or greater");
+
   const ZZ_pX& P = poly.get_poly();
   
   vector<pair<ZZ_p, ZZ_p>> points;
@@ -226,7 +229,9 @@ kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int chunk_off
 bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kzg::blob& expected_data) {
   vector<pair<ZZ_p, ZZ_p>>& points = expected_data.get_data();
 
-  if (points.size() >= _G1.size())
+  if (points.size() < 1)
+    throw invalid_argument("expected_data size must be 1 or greater");
+  else if (points.size() >= _G1.size())
     throw invalid_argument("expected_data size cannot be or exceed setup size");
   
   ZZ_pX I, Z;

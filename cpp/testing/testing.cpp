@@ -14,6 +14,7 @@ void check_test(bool status, string test_name);
 void example_test();
 void random_test(int length, int num_coeff, int runs);
 void empty_proof_test();
+void empty_verify_test();
 void invalid_setup_test();
 void poly_empty_test();
 void poly_degree_1_test();
@@ -25,8 +26,8 @@ string random_string(const int len);
 
 int main() {
   kzg::init();
-  // empty_proof_test();  // seg faults!
-  // empty_verify_test(); // seg faults
+  empty_proof_test();
+  empty_verify_test();
   invalid_setup_test();
   poly_degree_1_test();
   poly_degree_10_test();
@@ -77,21 +78,17 @@ void random_test(int length, int num_coeff, int runs) {
   }
 }
 
-void empty_proof_test() { // Still getting seg faults.
+void empty_proof_test() {
   kzg::trusted_setup kzg(128);
   kzg::blob blob = kzg::blob::from_string("some data here");
   kzg::poly poly = kzg::poly::from_blob(blob);
   bool exception = false;
-  try {
-    kzg::proof empty_proof = kzg.create_proof(poly, 5, 0);
-  } catch(...) {
-    exception = true;
-  }
-
-  check_test(exception, "empty_proof_test");
+  try { kzg.create_proof(poly, 5, 0); }
+  catch(...) { exception = true; }
+  check_test(exception, "empty proof is invalid");
 }
 
-void empty_verify_test() { // Still getting seg faults
+void empty_verify_test() {
   kzg::trusted_setup kzg(128);
   kzg::blob blob = kzg::blob::from_string("some data here");
   kzg::poly poly = kzg::poly::from_blob(blob);
@@ -100,13 +97,9 @@ void empty_verify_test() { // Still getting seg faults
   kzg::proof empty_proof = kzg.create_proof(poly, strlen("some da"), strlen("ta"));
   kzg::blob refute = kzg::blob::from_string("", strlen("some da"));
   bool exception = false;
-  try {
-    kzg.verify_proof(commit, empty_proof, refute);
-  } catch(...) {
-    exception = true;
-  }
-
-  check_test(exception, "empty_verify_test");
+  try { kzg.verify_proof(commit, empty_proof, refute); }
+  catch(...) { exception = true; }
+  check_test(exception, "empty verifification is invalid");
 }
 
 void invalid_setup_test() {
