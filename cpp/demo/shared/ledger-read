@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd $SHARED_FOLDER
+
+cat ledger/$1

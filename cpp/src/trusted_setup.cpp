@@ -34,9 +34,10 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
 
   unsigned int num_threads = std::thread::hardware_concurrency();
   
-  if (num_threads == 0) {
+  if (num_threads == 0)
     num_threads = 4;
-  } else if (num_coeff < num_threads) {
+  
+  if (num_coeff < num_threads) {
     generate_elements_range(0, num_coeff, std::cref(s_powers));
   } else {
     int elements_per_thread = num_coeff / num_threads;

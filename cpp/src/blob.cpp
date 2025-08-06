@@ -25,8 +25,11 @@ kzg::blob kzg::blob::from_bytes(const uint8_t* bytes, int byte_offset, int byte_
   else if (byte_length % chunk_size != 0)
     throw invalid_argument("byte_length is not a multiple of chunk_size.");
   
+  int chunk_offset = byte_offset / chunk_size;
+  int chunk_length = byte_length / chunk_size;
+
   vector<pair<ZZ_p, ZZ_p>> data;
-  for (int i = byte_offset / chunk_size; i < byte_length / chunk_size; i++) {
+  for (int i = 0; i < chunk_length; i++) {
     unsigned char chunk_data[MODBYTES_CURVE] = {0};
     for (int j = 0; j < chunk_size; j++)
       chunk_data[j] = bytes[i * chunk_size + j];
@@ -35,7 +38,7 @@ kzg::blob kzg::blob::from_bytes(const uint8_t* bytes, int byte_offset, int byte_
     ZZFromBytes(chunk_scalar, chunk_data, MODBYTES_CURVE);
     
     ZZ_p ZZ_x, ZZ_y;
-    ZZ_x = i;
+    ZZ_x = chunk_offset + i;
     ZZ_y = conv<ZZ_p>(chunk_scalar);
     
     data.push_back({ZZ_x, ZZ_y});

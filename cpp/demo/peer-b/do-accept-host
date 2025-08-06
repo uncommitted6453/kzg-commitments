@@ -1,0 +1,14 @@
+#!/bin/sh
+
+top_block=$(ledger-top)
+host_request=$(ledger-read $top_block)
+args=($host_request)
+
+file=${args[1]}
+commit=${args[2]}
+
+cp ../peer-a/$file .
+echo "[Peer B] downloaded $file from peer-A"
+
+echo $top_block > request_block
+echo "[Peer B] saved host_request block"
