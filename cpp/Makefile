@@ -5,11 +5,14 @@ KZG_H=$(wildcard src/*.h)
 KZG_OBJ=$(patsubst src/%.cpp, obj/%.o, $(KZG_SRC))
 KZG_LIB=miracl-core/cpp/core.a ntl/src/ntl.a
 
-all: example/example benchmark/benchmark
+all: demo/shared/kzg-cli
 
-example/example: example/example.cpp lib/kzg-bls12381.a lib/core.a lib/ntl.a
-	g++ example/example.cpp -Iinclude lib/kzg-bls12381.a lib/core.a lib/ntl.a -lgmp -o $@
-	./example/example
+example/example: example/example.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
+	g++ example/example.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
+	./$@
+
+demo/shared/kzg-cli: demo/shared/kzg-cli.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
+	g++ demo/shared/kzg-cli.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
 
 benchmark/benchmark: benchmark/benchmark.cpp lib/kzg-bls12381.a lib/core.a lib/ntl.a
 	g++ benchmark/benchmark.cpp -Iinclude lib/kzg-bls12381.a lib/core.a lib/ntl.a -lgmp -o $@
