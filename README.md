@@ -1,4 +1,25 @@
 # kzg-commitments
+A C++ library implementing the KZG (Kate-Zaverucha-Goldberg) commitment scheme.
+
+## Documentation
+
+https://uncommitted6453.github.io/kzg-commitments/index.html
+
+## Installation
+
+Run the following to build the library:
+
+```sh
+git clone --recurse-submodules -j8 https://github.com/uncommitted6453/kzg-commitments.git
+cd kzg-commitments/cpp
+make
+```
+
+Then, copy the contents of the generated lib and include folders into your project and link them when compiling 
+with your toolchain. For example, with g++, this might look like:
+```cpp
+g++ my-project.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o a.out
+```
 
 ## Benchmarking
 
