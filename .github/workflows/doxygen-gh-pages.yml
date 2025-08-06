@@ -15,7 +15,11 @@ jobs:
       - uses: mattnotmitt/doxygen-action@v1.9.5
         with:
           doxyfile-path: 'cpp/Doxyfile'
+
+      - name: Add .nojekyll file to output directory
+        run: touch docs/html
+
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/html
+          publish_dir: docs/html
