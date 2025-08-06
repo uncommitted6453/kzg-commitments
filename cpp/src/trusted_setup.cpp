@@ -1,52 +1,24 @@
-#include "kzg.h"
+#include <kzg.h>
 
-#include <fp12_BN158.h>
-#include <pair_BN158.h>
-#include <big_B160_56.h>
-#include <randapi.h>
 #include <fstream>
 #include <cstdint>
-#include <random>
-#include <array>
 #include <thread>
 #include <vector>
 #include <functional>
 #include "util.h"
 
-using namespace std;
-using namespace BN158;
-using namespace B160_56;
-using namespace NTL;
-using namespace core;
+int kzg::CURVE_ORDER_BYTES;
 
-void generate_random_BIG(BIG& random);
+static constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_CURVE + 1;
+static constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_CURVE + 1;
 
-void kzg::trusted_setup::generate_elements_range(
-  int start, int end, BIG s_i, BIG s
-) {
-  ECP G1_s_i;
-  ECP_generator(&G1_s_i);
-  PAIR_G1mul(&G1_s_i, s_i);
-  _G1[start] = G1_s_i;
-
-  ECP2 G2_s_i;
-  ECP2_generator(&G2_s_i);
-  PAIR_G2mul(&G2_s_i, s_i);
-  _G2[start] = G2_s_i;
-
-  for (int i = start + 1; i < end; i++) {
-    PAIR_G1mul(&G1_s_i, s);
-    _G1[i] = G1_s_i;
-    
-    PAIR_G2mul(&G2_s_i, s);
-    _G2[i] = G2_s_i;
-  }
+void kzg::init() {
+  ZZ ZZ_curve_order = ZZ_from_BIG(CURVE_Order);
+  ZZ_p::init(ZZ_curve_order);
+  kzg::CURVE_ORDER_BYTES = NumBytes(ZZ_curve_order);
 }
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
-  ZZ z = ZZ_from_BIG(CURVE_Order);
-  ZZ_p::init(z);
-  
   BIG BIG_s;
   generate_random_BIG(BIG_s);
   ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
@@ -54,66 +26,51 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
   _G1.resize(num_coeff);
   _G2.resize(num_coeff);
 
+  std::vector<BIG> s_powers(num_coeff);
+  for (int i = 0; i < num_coeff; i++) {
+    ZZ_p s_i = power(s, i);
+    BIG_from_ZZ(s_powers[i], rep(s_i));
+  }
+
   unsigned int num_threads = std::thread::hardware_concurrency();
+  
   if (num_threads == 0) {
     num_threads = 4;
-  }
-  
-  int elements_per_thread = num_coeff / num_threads;
-  int remaining_elements = num_coeff % num_threads;
-  
-  std::vector<std::thread> threads;
-  threads.reserve(num_threads);
+  } else if (num_coeff < num_threads) {
+    generate_elements_range(0, num_coeff, std::cref(s_powers));
+  } else {
+    int elements_per_thread = num_coeff / num_threads;
+    int remaining_elements = num_coeff % num_threads;
+    
+    std::vector<std::thread> threads;
+    threads.reserve(num_threads);
 
-  int start = 0;
-  for (unsigned int t = 0; t < num_threads; t++) {
-    // distribute remaining elements 1 each to first remaining_elements threads
-    int num_elements_to_handle = elements_per_thread;
-    if (t < remaining_elements) {
-      num_elements_to_handle += 1;
+    int start = 0;
+    for (unsigned int t = 0; t < num_threads; t++) {
+      // distribute remaining elements 1 each to first remaining_elements threads
+      int num_elements_to_handle = elements_per_thread;
+      if (t < remaining_elements)
+        num_elements_to_handle += 1;
+
+      int end = start + num_elements_to_handle;
+      if (start < num_coeff) {
+        threads.push_back(std::thread(
+          &kzg::trusted_setup::generate_elements_range, 
+          this, start, end, std::cref(s_powers)
+        ));
+      }
+      start = end;
     }
-
-    int end = start + num_elements_to_handle;
-    if (start < num_coeff) {
-      BIG BIG_s_i;
-      ZZ_p s_i = power(s, start);
-      BIG_from_ZZ(BIG_s_i, rep(s_i));
-
-      threads.push_back(std::thread(
-        &kzg::trusted_setup::generate_elements_range, 
-        this, start, end, BIG_s_i, BIG_s
-      ));
+    
+    for (auto& thread : threads) {
+      thread.join();
     }
-    start = end;
   }
-  
-  for (auto& thread : threads) {
-    thread.join();
-  }
-}
-
-void generate_random_BIG(BIG& random) {
-  csprng rng;
-  std::random_device gen;
-  std::array<unsigned char, 32> seed_bytes;
-  for (int i = 0; i < 32; i++) {
-    seed_bytes[i] = static_cast<unsigned char>(gen());
-  }
-  RAND_seed(&rng, seed_bytes.size(), reinterpret_cast<char*>(seed_bytes.data()));
-
-  BIG curve_order_copy;
-  BIG_rcopy(curve_order_copy, CURVE_Order);
-  
-  BIG_randomnum(random, curve_order_copy, &rng);
-  RAND_clean(&rng);
 }
 
 kzg::trusted_setup::trusted_setup(const std::string& filename) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
-  
-  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
-  constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_B160_56 + 1;
   
   std::ifstream file(filename, std::ios::in | std::ios::binary);
   if (!file.is_open()) {
@@ -163,6 +120,20 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
+void kzg::trusted_setup::generate_elements_range(int start, int end, const std::vector<BIG>& s_powers) {
+  for (int i = start; i < end; i++) {
+    ECP G1_s_i;
+    ECP_generator(&G1_s_i);
+    PAIR_G1mul(&G1_s_i, const_cast<BIG&>(s_powers[i]));
+    _G1[i] = G1_s_i;
+
+    ECP2 G2_s_i;
+    ECP2_generator(&G2_s_i);
+    PAIR_G2mul(&G2_s_i, const_cast<BIG&>(s_powers[i]));
+    _G2[i] = G2_s_i;
+  }
+}
+
 kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
   return kzg::commit(polyeval_G1(poly.get_poly()));
 }
@@ -173,6 +144,12 @@ bool kzg::trusted_setup::verify_commit(kzg::commit& commit, const kzg::poly& pol
 }
 
 ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
+  if (deg(P) == -1) {
+    ECP inf;
+    ECP_inf(&inf);
+    return inf;
+  }
+
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -194,6 +171,12 @@ ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
 }
 
 ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
+  if (deg(P) == -1) {
+    ECP2 inf;
+    ECP2_inf(&inf);
+    return inf;
+  }
+
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -214,11 +197,22 @@ ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
   return res;
 }
 
-kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int offset, int length) {
+kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offset, int byte_length, int chunk_size) {
+  if (chunk_size > CURVE_ORDER_BYTES - 1)
+    throw invalid_argument("chunk_size must be lower than CURVE_ORDER_BYTES.");
+  else if (byte_offset % chunk_size != 0)
+    throw invalid_argument("byte_offset is not a multiple of chunk_size.");
+  else if (byte_length % chunk_size != 0)
+    throw invalid_argument("byte_length is not a multiple of chun_size.");
+  
+  return create_proof(poly, byte_offset / chunk_size, byte_length / chunk_size);
+}
+
+kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int chunk_offset, int chunk_length) {
   const ZZ_pX& P = poly.get_poly();
   
   vector<pair<ZZ_p, ZZ_p>> points;
-  evaluate_polynomial_points(points, P, offset, length);
+  evaluate_polynomial_points(points, P, chunk_offset, chunk_length);
   
   ZZ_pX I, Z;
   linear_roots_and_polyfit(I, Z, points);
@@ -254,9 +248,6 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
     std::cerr << "failed to export" << std::endl;
     return;
   }
-  
-  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
-  constexpr size_t G2_OCTET_SIZE = 4 * MODBYTES_B160_56 + 1;
   
   uint64_t num_coeffs = static_cast<uint64_t>(_G1.size());
   file.write(reinterpret_cast<const char*>(&num_coeffs), sizeof(num_coeffs));

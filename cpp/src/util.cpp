@@ -3,14 +3,11 @@
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <random>
+#include <array>
+#include <randapi.h>
 
 #define FAST_MULTIEVAL_THRESHOLD 140
-
-using namespace std;
-using namespace B160_56;
-using namespace BN158;
-using namespace NTL;
-using namespace core;
 
 static ZZ_pX build_linear_roots_tree(
   vector<ZZ_pX>& linear_roots,
@@ -32,34 +29,141 @@ static ZZ_pX polyfit_R(
 );
 
 void BIG_from_ZZ(BIG big, const ZZ& value) {
-  unsigned char data[MODBYTES_B160_56];
-  BytesFromZZ(data, value, MODBYTES_B160_56);
+  unsigned char data[MODBYTES_CURVE];
+  BytesFromZZ(data, value, MODBYTES_CURVE);
   
   int a = 0;
-  int b = MODBYTES_B160_56 - 1;
+  int b = MODBYTES_CURVE - 1;
   
   while (a < b) {
     swap<unsigned char>(data[a++], data[b--]);
   }
   
-  BIG_fromBytesLen(big, (char*) data, MODBYTES_B160_56);
+  BIG_fromBytesLen(big, (char*) data, MODBYTES_CURVE);
 }
 
 ZZ ZZ_from_BIG(const BIG big) {
-  unsigned char data[MODBYTES_B160_56];
+  unsigned char data[MODBYTES_CURVE];
   BIG_toBytes((char*) data, (int64_t*) big);
   
   int a = 0;
-  int b = MODBYTES_B160_56 - 1;
+  int b = MODBYTES_CURVE - 1;
   
   while (a < b) {
     swap<unsigned char>(data[a++], data[b--]);
   }
   
   ZZ res;
-  ZZFromBytes(res, data, MODBYTES_B160_56);
+  ZZFromBytes(res, data, MODBYTES_CURVE);
   
   return res;
+}
+
+void generate_random_BIG(BIG& random) {
+  csprng rng;
+  std::random_device gen;
+  std::array<unsigned char, 32> seed_bytes;
+  for (int i = 0; i < 32; i++) {
+    seed_bytes[i] = static_cast<unsigned char>(gen());
+  }
+  RAND_seed(&rng, seed_bytes.size(), reinterpret_cast<char*>(seed_bytes.data()));
+
+  BIG curve_order_copy;
+  BIG_rcopy(curve_order_copy, CURVE_Order);
+  
+  BIG_randomnum(random, curve_order_copy, &rng);
+  RAND_clean(&rng);
+}
+
+std::vector<uint8_t> serialize_ECP(const ECP& point) {
+  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_CURVE + 1;
+  char buffer[G1_OCTET_SIZE];
+  octet oct = {0, G1_OCTET_SIZE, buffer};
+  ECP_toOctet(&oct, const_cast<ECP*>(&point), false);
+  
+  std::vector<uint8_t> result;
+  uint32_t len = static_cast<uint32_t>(oct.len);
+  result.insert(result.end(), 
+                reinterpret_cast<const uint8_t*>(&len), 
+                reinterpret_cast<const uint8_t*>(&len) + sizeof(len));
+  result.insert(result.end(), 
+                reinterpret_cast<const uint8_t*>(oct.val), 
+                reinterpret_cast<const uint8_t*>(oct.val) + oct.len);
+  
+  return result;
+}
+
+ECP deserialize_ECP(const std::vector<uint8_t>& bytes) {
+  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_CURVE + 1;
+  
+  uint32_t len;
+  std::memcpy(&len, bytes.data(), sizeof(len));
+  
+  char buffer[G1_OCTET_SIZE];
+  std::memcpy(buffer, bytes.data() + sizeof(len), len);
+  
+  octet oct = {static_cast<int>(len), G1_OCTET_SIZE, buffer};
+  ECP point;
+  if (!ECP_fromOctet(&point, &oct)) {
+    std::cerr << "failed to deserialize ECP point" << std::endl;
+  }
+  
+  return point;
+}
+
+
+vector<uint8_t> serialize_ZZ_pX(const ZZ_pX& poly) {
+  std::vector<uint8_t> result;
+  
+  long degree = deg(poly);
+  result.insert(result.end(), 
+                reinterpret_cast<const uint8_t*>(&degree), 
+                reinterpret_cast<const uint8_t*>(&degree) + sizeof(degree));
+  
+  for (long i = 0; i <= degree; i++) {
+    const ZZ& coeff_zz = rep(coeff(poly, i));
+    
+    uint8_t num_bytes = (uint8_t) NumBytes(coeff_zz);
+    result.push_back(num_bytes);
+    
+    if (num_bytes > 0) {
+      uint8_t coeff_bytes[MODBYTES_CURVE];
+      BytesFromZZ(coeff_bytes, coeff_zz, num_bytes);
+      result.insert(result.end(), coeff_bytes, coeff_bytes + num_bytes);
+    }
+  }
+  
+  return result;
+}
+
+ZZ_pX deserialize_ZZ_pX(const vector<uint8_t>& bytes) {
+  size_t offset = 0;
+  
+  long degree;
+  std::memcpy(&degree, bytes.data() + offset, sizeof(degree));
+  offset += sizeof(degree);
+  
+  ZZ_pX poly;
+  if (degree >= 0) {
+    poly.SetLength(degree + 1);
+    
+    for (long i = 0; i <= degree; i++) {
+      uint8_t num_bytes = bytes[offset++];
+      
+      if (num_bytes > 0) {
+        ZZ coeff_zz;
+        ZZFromBytes(coeff_zz, bytes.data() + offset, num_bytes);
+        offset += num_bytes;
+        
+        conv(poly[i], coeff_zz);
+      } else {
+        clear(poly[i]);
+      }
+    }
+  }
+  
+  poly.normalize();
+  return poly;
 }
 
 void linear_roots_and_polyfit(ZZ_pX& result, ZZ_pX& linear_roots, vector<pair<ZZ_p, ZZ_p>>& points) {
@@ -174,40 +278,4 @@ static ZZ_pX build_linear_roots_tree(vector<ZZ_pX>& linear_roots, vector<pair<ZZ
   linear_roots.push_back(Z_1);
   
   return Z_1 * Z_2;
-}
-
-std::vector<uint8_t> serialize_ECP(const ECP& point) {
-  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
-  char buffer[G1_OCTET_SIZE];
-  octet oct = {0, G1_OCTET_SIZE, buffer};
-  ECP_toOctet(&oct, const_cast<ECP*>(&point), false);
-  
-  std::vector<uint8_t> result;
-  uint32_t len = static_cast<uint32_t>(oct.len);
-  result.insert(result.end(), 
-                reinterpret_cast<const uint8_t*>(&len), 
-                reinterpret_cast<const uint8_t*>(&len) + sizeof(len));
-  result.insert(result.end(), 
-                reinterpret_cast<const uint8_t*>(oct.val), 
-                reinterpret_cast<const uint8_t*>(oct.val) + oct.len);
-  
-  return result;
-}
-
-ECP deserialize_ECP(const std::vector<uint8_t>& bytes) {
-  constexpr size_t G1_OCTET_SIZE = 2 * MODBYTES_B160_56 + 1;
-  
-  uint32_t len;
-  std::memcpy(&len, bytes.data(), sizeof(len));
-  
-  char buffer[G1_OCTET_SIZE];
-  std::memcpy(buffer, bytes.data() + sizeof(len), len);
-  
-  octet oct = {static_cast<int>(len), G1_OCTET_SIZE, buffer};
-  ECP point;
-  if (!ECP_fromOctet(&point, &oct)) {
-    std::cerr << "failed to deserialize ECP point" << std::endl;
-  }
-  
-  return point;
 }
