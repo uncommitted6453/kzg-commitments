@@ -1,0 +1,74 @@
+#!/bin/sh
+
+export SHARED_FOLDER=$(pwd)/shared
+export PATH="$PATH:$SHARED_FOLDER"
+
+clean() {
+  # rm -r shared/kzg_public
+  rm -r shared/ledger
+  
+  rm -f peer-a/kzg_public
+  
+  rm -f peer-b/kzg_public
+  rm -f peer-b/request_block
+  rm -f peer-b/proof_of_host
+  rm -f peer-b/file_commit
+  rm -f peer-b/document.txt
+}
+
+kzg_setup() {
+  echo "generating KZG trusted setup with 65536 terms..."
+  cd shared
+  # kzg-cli setup 65536
+  rm -f ../peer-a/kzg_public
+  rm -f ../peer-b/kzg_public
+  cp kzg_public ../peer-a/kzg_public
+  cp kzg_public ../peer-b/kzg_public
+  cd ..
+}
+
+ledger_setup() {
+  cd shared
+  echo "creating initial balance for peers."
+  ledger-publish balance_add A 100
+  ledger-publish balance_add B 100
+  ledger-publish balance_add C 100
+  cd ..
+}
+
+echo " -------------- SETUP --------------- "
+
+clean
+kzg_setup
+ledger_setup
+sleep 1
+
+echo " -------------- PEER A -------------- "
+
+cd peer-a
+./peer-A-host-request
+cd ..
+sleep 1
+
+echo " -------------- PEER B -------------- "
+
+cd peer-b
+./peer-B-accept-host
+cd ..
+sleep 1
+
+echo " ------------- HOSTING -------------- "
+
+echo "Peer C generates random noise, in pratice this may be entropy from real chain publishes"
+
+for i in {1..5}; do
+  cd peer-c
+  ./peer-C-random
+  cd ..
+  sleep 2
+
+  cd peer-b
+  ./peer-B-prove-host
+  cd ..
+  sleep 2
+done

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "[Peer C] random noise"
+ledger-publish random $RANDOM

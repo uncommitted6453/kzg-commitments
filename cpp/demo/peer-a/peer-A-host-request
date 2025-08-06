@@ -1,0 +1,13 @@
+#!/bin/sh
+
+echo "[Peer A] creating KZG commit of document.txt."
+
+# document_commit=$(kzg-cli commit document.txt)
+document_commit="abcdefg"
+
+ledger-publish host_request document.txt $document_commit 5 1
+
+echo "[Peer A] published a contract to request hosting of document.txt."
+echo "[Peer A] the file should be hosted over 5 hours."
+echo "[Peer A] at an assumed rate of 10 currency per hour, this is a transaction of 50 currency."
+echo "[Peer A] block #1 is staked as proof of balance for payment."
