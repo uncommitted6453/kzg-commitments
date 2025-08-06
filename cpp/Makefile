@@ -4,11 +4,15 @@ KZG_SRC=$(wildcard src/*.cpp)
 KZG_OBJ=$(patsubst src/%.cpp, obj/%.o, $(KZG_SRC))
 KZG_LIB=miracl-core/cpp/core.a ntl/src/ntl.a
 
-all: example/example
+all: demo/demo
 
 example/example: example/example.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
 	g++ example/example.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
-	./example/example
+	./$@
+
+demo/demo: demo/demo.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
+	g++ demo/demo.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
+	cd demo && ./demo
 
 lib/kzg-bn158.a: config_bn158 include/NTL/config.h lib/ntl.a $(KZG_OBJ) | lib
 	ar rvs $@ $(KZG_OBJ)
