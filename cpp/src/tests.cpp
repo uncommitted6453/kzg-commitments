@@ -1,5 +1,6 @@
 #include "kzg.h"
 #include "tests.h"
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -10,7 +11,11 @@
 
 bool all_tests() {
   srand((unsigned)time(NULL) * getpid());
-  return random_test();
+  if (!random_test()) {
+    printf("FAILED random_test");
+    return false;
+  }
+  return true;
   // return main_test();
 }
 
@@ -39,7 +44,7 @@ bool random_test() {
     // Should go up to length instead of length - 1,
     // but create_proof seg faults when j == 0, and k == length.
     for (int j = 0; j < length - 1; ++j) {
-      for (int k = j + 1; j + k <= length; ++k) {
+      for (int k = 1; j + k < length; ++k) {
         to_verify.push_back(make_pair(j, k));
       }
     }
