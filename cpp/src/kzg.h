@@ -13,33 +13,98 @@ namespace kzg {
 
 extern int CURVE_ORDER_BYTES;
 
-extern void init();
+#define MAX_CHUNK_BYTES (CURVE_ORDER_BYTES - 1)
+
+/**
+* @brief Initialize the library.
+*
+* This function must be called prior to any other library function.
+*/
+void init();
 
 class blob {
 private:
-  vector<pair<ZZ_p, ZZ_p>> data;
+vector<pair<ZZ_p, ZZ_p>> data;
 
 public:
-  static blob from_string(string s);
-  static blob from_string(string s, int offset);
-  static blob from_bytes(const uint8_t* bytes, int byte_offset, int byte_length, int chunk_size);
-  
   blob(vector<pair<ZZ_p, ZZ_p>>& _data) : data(_data) {}
   vector<pair<ZZ_p, ZZ_p>>& get_data() { return data; }
+
+  /**
+  * @brief Generate a vector of evaluation points encoding a string.
+  *
+  * Use this function along with poly::from_blob to obtain a polynomial 
+  * encoding your string that can be committed to. 
+  *
+  * @param s The string to construct a blob from
+  * @return A blob object containing the vector of evaluation points
+  */
+  static blob from_string(string s);
+
+  /**
+  * @brief Generate a vector of evaluation points encoding a string.
+  *
+  * Use this function along with poly::from_blob to obtain a polynomial 
+  * encoding your string that can be committed to. 
+  *
+  * @param s The string to construct a blob from
+  * @param offset The offset the evaluation points should have (useful for 
+                  committing or verifying a specific section of data)
+  * @return A blob object containing the vector of evaluation points
+  */
+  static blob from_string(string s, int offset);
+ 
+  /**
+  * @brief Generate a vector of evaluation points encoding a buffer of bytes.
+  *
+  * Each point represents chunk_size bytes. Use this function along with 
+  * poly::from_blob to obtain a polynomial encoding your data that can be
+  * committed to or used in verification. 
+  *
+  * @param bytes The byte buffer that you would like to encode
+  * @param byte_offset The offset into the buffer to begin encoding
+  * @param byte_length The number of bytes that should be encoded from the offset
+  * @param chunk_size The number of bytes that each point represents, MUST be less than kzg::CURVE_ORDER_BYTES - 1
+  * @return A blob object containing the vector of evaluation points
+  */
+  static blob from_bytes(const uint8_t* bytes, int byte_offset, int byte_length, int chunk_size);
 };
 
 class poly {
 private:
   ZZ_pX data;
-
-public:
-  static poly from_blob(blob blob);
-  static poly from_random(int num_coeff);
   
+public:
   poly(ZZ_pX _data) : data(_data) {}
   const ZZ_pX& get_poly() const { return data; }
-  
+  /**
+  * @brief Constructs a polynomial fitting the evaluation points in a blob.
+  * 
+  * A standard flow would be to generate a blob from the data you would like to commit or verify
+  * and then use this function to obtain a polynomial that can be used with KZG. 
+  * 
+  * @param blob The evaluation points that you want to generate a polynomial for
+  * @return The polynomial fitted to the evaluation points
+  */
+  static poly from_blob(blob blob);
+
+  /**
+  * @brief Serialize the polynomial to bytes.
+  * 
+  * Use this method is recommended for transmission or storage of the polynomial.
+  * 
+  * @return A vector of bytes representing the polynomial.
+  */
   std::vector<uint8_t> serialize();
+  
+  /**
+  * @brief Deserialize the polynomial to bytes.
+  * 
+  * Use this method is recommended for transmission or storage of the polynomial.
+  * 
+  * @param bytes The vector of bytes containing the serialized polynomial object
+  * @return A vector of bytes representing the polynomial.
+  */
   static poly deserialize(const std::vector<uint8_t>&);
 };
 
@@ -50,8 +115,23 @@ private:
 public:
   commit(ECP _curve_point) : curve_point(_curve_point) {}
   ECP& get_curve_point() { return curve_point; }
-
+  /**
+  * @brief Serialize the commit (a point on the elliptic curve) to bytes.
+  * 
+  * Use this method is recommended for transmission or storage of the proof.
+  * 
+  * @return A vector of bytes representing the commit.
+  */
   std::vector<uint8_t> serialize();
+  
+  /**
+  * @brief Deserialize the commit (a point on the elliptic curve) to bytes.
+  * 
+  * Use this method is recommended for transmission or storage of the commit.
+  * 
+  * @param bytes The vector of bytes containing the serialized commit object
+  * @return A vector of bytes representing the commit.
+  */
   static commit deserialize(const std::vector<uint8_t>&);
 };
 
@@ -63,8 +143,24 @@ public:
   proof(ECP _curve_point) : curve_point(_curve_point) {}
   ECP& get_curve_point() { return curve_point; }
 
+  /**
+  * @brief Serialize the proof (a point on the elliptic curve) to bytes.
+  * 
+  * Use this method is recommended for transmission or storage of the proof.
+  * 
+  * @return A vector of bytes representing the proof.
+  */
   std::vector<uint8_t> serialize();
-  static proof deserialize(const std::vector<uint8_t>&);
+
+  /**
+  * @brief Deserialize the proof (a point on the elliptic curve) from bytes.
+  * 
+  * Use this method is recommended for transmission or storage of the proof.
+  * 
+  * @param bytes The vector of bytes containing the serialized proof object
+  * @return The deserialized proof object
+  */
+  static proof deserialize(const std::vector<uint8_t>& bytes);
 };
 
 class trusted_setup {
@@ -90,7 +186,7 @@ public:
   trusted_setup(int num_coeff);
   
   /**
-  * @brief Constructs a trusted setup from a file exported with kzg::trusted_setup::export_setup.
+  * @brief Loads a trusted setup from a file exported with kzg::trusted_setup::export_setup.
   * 
   * @param filename Path to the binary file containing the trusted setup data
   */
