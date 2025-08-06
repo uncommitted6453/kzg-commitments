@@ -87,9 +87,52 @@ void data_benchmark()
   }
 }
 
+void setup_benchmark()
+{
+  vector<double> sizes = {128, 256, 512, 1024, 2048};
+  for (double size : sizes)
+  {
+    auto t_start = high_resolution_clock::now();
+    kzg::trusted_setup kzg(size);
+    auto t_stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(t_stop - t_start);
+    cout << "setup took " << duration.count() << " microseconds" << endl;
+  }
+}
+
+void verification_benchmark()
+{
+
+  kzg::trusted_setup kzg(128);
+  vector<double> sizes = {16, 32, 64, 110, 256};
+  for (double size : sizes)
+  {
+
+    string rand_str1 = generateRandomString(size);
+    string rand_str2 = generateRandomString(size);
+
+    string data = rand_str1 + rand_str2;
+    kzg::blob blob = kzg::blob::from_string(data);
+    kzg::poly poly = kzg::poly::from_blob(blob);
+    kzg::commit commit = kzg.create_commit(poly);
+
+    auto t_start = high_resolution_clock::now();
+
+    kzg::proof hello_proof = kzg.create_proof(poly, rand_str1.size(), rand_str2.size());
+
+    kzg::blob verify = kzg::blob::from_string(rand_str1, rand_str2.size());
+    if (kzg.verify_proof(commit, hello_proof, verify))
+      cout << "verified: hello" << endl;
+
+    auto t_stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(t_stop - t_start);
+    cout << "verification took " << duration.count() << " microseconds" << endl;
+  }
+}
+
 int main(int argc, char *argv[])
 {
   example_program();
-  data_benchmark();
+  setup_benchmark();
   return 0;
 }
