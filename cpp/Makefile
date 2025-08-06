@@ -1,6 +1,7 @@
 .PHONY=all clean config_bn158 config_bn254
 
 KZG_SRC=$(wildcard src/*.cpp)
+KZG_H=$(wildcard src/*.h)
 KZG_OBJ=$(patsubst src/%.cpp, obj/%.o, $(KZG_SRC))
 KZG_LIB=miracl-core/cpp/core.a ntl/src/ntl.a
 
@@ -16,7 +17,7 @@ lib/kzg-bn158.a: config_bn158 include/NTL/config.h lib/ntl.a $(KZG_OBJ) | lib
 lib/kzg-bn254.a: config_bn254 include/NTL/config.h lib/ntl.a $(KZG_OBJ) | lib
 	ar rvs $@ $(KZG_OBJ)
 
-obj/%.o: src/%.cpp include/kzg.h | obj
+obj/%.o: src/%.cpp include/kzg.h $(KZG_H) | obj
 	g++ -Iinclude -c -o $@ $<
 
 config_bn158: miracl-core/cpp/config_curve_BN158.h | lib include
