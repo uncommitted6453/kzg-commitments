@@ -36,39 +36,36 @@ ledger_setup() {
   cd ..
 }
 
-echo " -------------- SETUP --------------- "
-
-clean
-kzg_setup
-ledger_setup
-sleep 1
-
-echo " -------------- PEER A -------------- "
-
-cd peer-a
-./peer-A-host-request
-cd ..
-sleep 1
-
-echo " -------------- PEER B -------------- "
-
-cd peer-b
-./peer-B-accept-host
-cd ..
-sleep 1
-
-echo " ------------- HOSTING -------------- "
-
-echo "Peer C generates random noise, in pratice this may be entropy from real chain publishes"
-
-for i in {1..5}; do
-  cd peer-c
-  ./peer-C-random
-  cd ..
-  sleep 2
-
-  cd peer-b
-  ./peer-B-prove-host
-  cd ..
-  sleep 2
-done
+# echo " -------------- SETUP --------------- "
+# 
+# clean
+# kzg_setup
+# ledger_setup
+# sleep 1
+# 
+# echo " -------------- PEER A -------------- "
+# 
+# cd peer-a && ./do-host-request && cd ..
+# sleep 1
+# 
+# echo " -------------- PEER B -------------- "
+# 
+# cd peer-b && ./do-accept-host && cd ..
+# sleep 1
+# 
+# echo " ------------- HOSTING -------------- "
+# 
+# echo "Peer C generates random noise, in pratice this may be entropy from real chain publishes"
+# 
+# for i in {1..5}; do
+#   cd peer-c && ./do-random && cd ..
+#   sleep 2
+# 
+#   cd peer-b && ./do-prove-host && cd ..
+#   sleep 2
+# done
+# 
+# echo " ----------- VERIFICATION ----------- "
+# 
+# cd peer-b && ./do-pay-peer-c && cd ..
+cd peer-c && ./do-verify-transaction && cd ..

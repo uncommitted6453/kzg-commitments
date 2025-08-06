@@ -1,0 +1,8 @@
+#!/bin/sh
+
+echo "[Peer B] paying peer C using completed file host as proof of balance"
+
+proof_of_host=$(cat proof_of_host)
+host_contract=$(cat request_block)
+
+ledger-publish transfer-to C using $host_contract proof $proof_of_host

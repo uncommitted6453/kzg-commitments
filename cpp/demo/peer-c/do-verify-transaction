@@ -1,0 +1,26 @@
+#!/bin/sh
+
+echo "[Peer C] verifying transaction from peer B"
+
+top_block=$(ledger-top)
+payment_block=$(ledger-read $top_block)
+payment_args=($payment_block)
+
+contract_block=${payment_args[3]}
+contract_block=$(ledger-read $contract_block)
+contract_args=($contract_block)
+commit=${contract_args[2]}
+
+for i in {5..9}; do
+  proof_block=$(ledger-read ${payment_args[$i]})
+  proof_args=($proof_block)
+
+  proof=${proof_args[2]}
+  offset=${proof_args[3]}
+  data=${proof_args[4]}
+
+  echo "[Peer C] verifying proof against against for block #${payment_args[$i]}"
+  if kzg-cli verify $commit $proof $offset $data; then
+    echo "[Peer C] verified."
+  fi
+done

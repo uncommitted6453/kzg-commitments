@@ -2,8 +2,7 @@
 
 echo "[Peer A] creating KZG commit of document.txt."
 
-# document_commit=$(kzg-cli commit document.txt)
-document_commit="abcdefg"
+document_commit=$(kzg-cli commit document.txt)
 
 ledger-publish host_request document.txt $document_commit 5 1
 

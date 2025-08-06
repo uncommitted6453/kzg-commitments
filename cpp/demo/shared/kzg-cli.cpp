@@ -9,6 +9,22 @@
 
 using namespace std::chrono;
 
+string to_hex(vector<uint8_t>& bytes) {
+  stringstream ss;
+  for (uint8_t byte : bytes)
+    ss << hex << setw(2) << setfill('0') << (unsigned int) byte;
+  return ss.str();
+}
+
+vector<uint8_t> from_hex(string s) {
+  vector<uint8_t> res;
+  for (int i = 0; i < s.size(); i += 2) {
+    string hex_byte = s.substr(i, 2);
+    res.push_back(strtol(hex_byte.c_str(), NULL, 16));
+  }
+  return res;
+}
+
 void create_setup(int num_coeff) {
   auto t_start = high_resolution_clock::now();
   kzg::trusted_setup kzg(num_coeff);
@@ -22,15 +38,8 @@ void create_setup(int num_coeff) {
   kzg.export_setup();
 }
 
-string to_hex(vector<uint8_t>& bytes) {
-  stringstream ss;
-  for (uint8_t byte : bytes)
-    ss << hex << setw(2) << setfill('0') << (unsigned int) byte;
-  return ss.str();
-}
-
 void commit_file(string filename) {
-  kzg::trusted_setup kzg("kzg_public");
+  kzg::trusted_setup kzg("../shared/kzg_public");
   
   std::ifstream file(string(filename), std::ios::in | std::ios::binary);
   vector<char> data(
@@ -53,7 +62,7 @@ void commit_file(string filename) {
 }
 
 void create_proof(string filename, int seed) {
-  kzg::trusted_setup kzg("kzg_public");
+  kzg::trusted_setup kzg("../shared/kzg_public");
   
   std::ifstream file(string(filename), std::ios::in | std::ios::binary);
   vector<char> data(
@@ -79,7 +88,24 @@ void create_proof(string filename, int seed) {
       subsection_bytes.push_back(bytes[i]);
 
   vector<uint8_t> proof_bytes = proof.serialize();
-  cout << to_hex(proof_bytes) << " " << to_hex(subsection_bytes) << endl;
+  cout << to_hex(proof_bytes) << " " << random_chunk << " " << to_hex(subsection_bytes) << endl;
+}
+
+int verify_proof(string commit_string, string proof_string, int chunk_offset, string data_string) {
+  vector<uint8_t> commit_bytes = from_hex(commit_string);
+  vector<uint8_t> proof_bytes = from_hex(proof_string);
+  vector<uint8_t> data_bytes  = from_hex(data_string);
+
+  kzg::trusted_setup kzg("../shared/kzg_public");
+  
+  kzg::commit commit = kzg::commit::deserialize(commit_bytes);
+  kzg::proof proof = kzg::proof::deserialize(proof_bytes);
+
+  int byte_offset = chunk_offset * MAX_CHUNK_BYTES;
+  int byte_length = 4 * MAX_CHUNK_BYTES;
+
+  kzg::blob verify = kzg::blob::from_bytes(data_bytes.data(), byte_offset, byte_length, MAX_CHUNK_BYTES);
+  return kzg.verify_proof(commit, proof, verify) ? 0 : 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -91,6 +117,8 @@ int main(int argc, char *argv[]) {
     commit_file(string(argv[2]));
   } else if (string(argv[1]) == "prove") {
     create_proof(string(argv[2]), stoi(argv[3]));
+  } else if (string(argv[1]) == "verify") {
+    return verify_proof(string(argv[2]), string(argv[3]), stoi(argv[4]), string(argv[5]));
   }
   
   return 0;

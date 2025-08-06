@@ -12,10 +12,11 @@ subsection_proof=$(kzg-cli prove document.txt $seed)
 args=($subsection_proof)
 
 proof=${args[0]}
-data=${args[1]}
+offset=${args[1]}
+data=${args[2]}
 
 published_block=$(ledger-top)
 published_block=$((published_block+1))
 echo "[Peer B] publishing subsection proof along with data"
-ledger-publish file_proof $request_block $proof $data
+ledger-publish file_proof $request_block $proof $offset $data
 echo $published_block >> proof_of_host
