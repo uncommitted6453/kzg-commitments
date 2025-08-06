@@ -24,3 +24,5 @@ for i in {5..9}; do
     echo "[Peer C] verified."
   fi
 done
+
+echo "[Peer C] verified all transactions. Peer B fufilled peer A's request and received 50. this is a valid proof of balance for the transaction."
