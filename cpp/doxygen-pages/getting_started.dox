@@ -58,13 +58,12 @@
  * @subsection proofs 3. Generate and Verify Proofs
  * 
  * @code{.cpp}
- *     // Generate a proof for evaluation at a specific point
- *     ZZ_p evaluation_point = random_ZZ_p();
- *     kzg::proof proof = kzg.create_proof(poly, evaluation_point);
+ *     // Generate a proof that the polynomial matches the 
+ *     // evaluation points for "hello" at the beginning of the string.
+ *     kzg::blob verify = kzg::blob::from_string("hello", 0);
  *     
  *     // Verify the proof
- *     ZZ_p evaluation = poly.evaluate_at(evaluation_point);
- *     if (kzg.verify_proof(commit, proof, evaluation_point, evaluation)) {
+ *     if (kzg.verify_proof(commit, hello_proof, verify)) {
  *         cout << "Proof verified successfully!" << endl;
  *     }
  *     
