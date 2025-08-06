@@ -1,4 +1,4 @@
-#include "kzg.h"
+#include <kzg.h>
 #include "util.h"
 
 std::vector<uint8_t> kzg::commit::serialize() {

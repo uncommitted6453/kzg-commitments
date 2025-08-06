@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
-#include "kzg.h"
-#include "util.h"
+#include <kzg.h>
 #include <chrono>
+
 
 using namespace std::chrono;
 

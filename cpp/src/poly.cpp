@@ -1,4 +1,4 @@
-#include "kzg.h"
+#include <kzg.h>
 #include "util.h"
 
 kzg::poly kzg::poly::from_blob(kzg::blob blob) {
