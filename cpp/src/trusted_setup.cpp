@@ -18,6 +18,15 @@ void kzg::init() {
   kzg::CURVE_ORDER_BYTES = NumBytes(ZZ_curve_order);
 }
 
+/**
+ * @brief Performs the trusted setup step of the KZG commitment scheme.
+ * 
+ * Computes the group elements G1[s^i] and G2[s^i], up to num_coeff. The 
+ * parameter num_coeff also determines the maximum degree of polynomials 
+ * that can be committed with the setup. 
+ * 
+ * @param num_coeff The number of group elements to generate
+ */
 kzg::trusted_setup::trusted_setup(int num_coeff) {
   BIG BIG_s;
   generate_random_BIG(BIG_s);
@@ -68,6 +77,11 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
   }
 }
 
+/**
+ * @brief Constructs a trusted setup from a file exported with kzg::trusted_setup::export_setup.
+ * 
+ * @param filename Path to the binary file containing the trusted setup data
+ */
 kzg::trusted_setup::trusted_setup(const std::string& filename) {
   ZZ z = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(z);
@@ -135,16 +149,41 @@ void kzg::trusted_setup::generate_elements_range(int start, int end, const std::
 }
 
 
+/**
+ * @brief Creates a KZG commitment for a given polynomial
+ * 
+ * Computes the commitment C = [P(s)]₁ where P is the polynomial and s is the
+ * secret value from the trusted setup. The commitment is a point on the G1 curve.
+ * 
+ * @param poly The polynomial to create a commitment for
+ * @return A KZG commitment object containing the G1 curve point
+ */
 kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
   return kzg::commit(polyeval_G1(poly.get_poly()));
 }
 
+/**
+ * @brief Verifies that a commitment matches a given polynomial
+ * 
+ * Checks if the provided commitment is the correct KZG commitment for the given
+ * polynomial by recomputing the commitment and comparing curve points.
+ * 
+ * @param commit The commitment to verify
+ * @param poly The polynomial that should correspond to the commitment
+ * @return true if the commitment is valid for the polynomial, false otherwise
+ */
 bool kzg::trusted_setup::verify_commit(kzg::commit& commit, const kzg::poly& poly) {
   kzg::commit expected_commit = create_commit(poly);
   return ECP_equals(&commit.get_curve_point(), &expected_commit.get_curve_point());
 }
 
 ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
+  if (deg(P) == -1) {
+    ECP inf;
+    ECP_inf(&inf);
+    return inf;
+  }
+
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -166,6 +205,12 @@ ECP kzg::trusted_setup::polyeval_G1(const ZZ_pX& P) {
 }
 
 ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
+  if (deg(P) == -1) {
+    ECP2 inf;
+    ECP2_inf(&inf);
+    return inf;
+  }
+
   BIG coeff_i;
   BIG_from_ZZ(coeff_i, rep(P[0]));
   
@@ -186,6 +231,19 @@ ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
   return res;
 }
 
+/**
+ * @brief Creates a KZG proof for a specific byte range of data
+ * 
+ * Generates a proof that the polynomial encodes the specified byte range, where the
+ * polynomial was generated such that each point represents chunk_size bytes.
+ * 
+ * @param poly The polynomial to create a proof for
+ * @param byte_offset Starting byte position (must be multiple of chunk_size)
+ * @param byte_length Number of bytes to prove (must be multiple of chunk_size)
+ * @param chunk_size Size of each chunk in bytes (must be < CURVE_ORDER_BYTES)
+ * @return A KZG proof object
+ * @throws invalid_argument if parameters don't meet the required constraints
+ */
 kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offset, int byte_length, int chunk_size) {
   if (chunk_size > CURVE_ORDER_BYTES - 1)
     throw invalid_argument("chunk_size must be lower than CURVE_ORDER_BYTES.");
@@ -197,6 +255,17 @@ kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offs
   return create_proof(poly, byte_offset / chunk_size, byte_length / chunk_size);
 }
 
+/**
+ * @brief Creates a KZG proof for a specific chunk range
+ * 
+ * Generates a proof that the polynomial correctly encodes the specified chunk range
+ * where the polynomial was generated such that each point represents chunk_size bytes.
+ * 
+ * @param poly The polynomial to create a proof for
+ * @param chunk_offset Starting chunk position
+ * @param chunk_length Number of chunks to prove
+ * @return A KZG proof object
+ */
 kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int chunk_offset, int chunk_length) {
   const ZZ_pX& P = poly.get_poly();
   
@@ -210,6 +279,17 @@ kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int chunk_off
   return kzg::proof(polyeval_G1(q));
 }
 
+/**
+ * @brief Verifies a KZG proof against a commitment and expected data
+ * 
+ * Verifies that the proof correctly demonstrates that the committed polynomial
+ * evaluates to the expected values at the specified points.
+ * 
+ * @param commit The commitment to verify against
+ * @param proof The proof to verify
+ * @param expected_data The blob containing expected evaluation points and values
+ * @return true if the proof is valid, false otherwise
+ */
 bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kzg::blob& expected_data) {
   vector<pair<ZZ_p, ZZ_p>>& points = expected_data.get_data();
   
@@ -231,6 +311,14 @@ bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kz
   return FP12_equals(&v1, &v2);
 }
 
+/**
+ * @brief Exports the trusted setup to a binary file
+ * 
+ * Serializes the trusted setup (G1 and G2 group elements) to a binary file
+ * for later reuse.
+ * 
+ * @param filename Path where the trusted setup should be exported (default: "kzg_public")
+ */
 void kzg::trusted_setup::export_setup(const std::string& filename) {
   std::ofstream file(filename, std::ios::out | std::ios::binary | std::ios::trunc);
   if (!file.is_open()) {
