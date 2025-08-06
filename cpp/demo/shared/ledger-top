@@ -1,0 +1,15 @@
+#!/bin/sh
+
+cd $SHARED_FOLDER
+
+cd ledger
+
+top_block=0
+for file in *; do
+  block_num=$((file-"0"))
+  if [ $block_num -gt $top_block ]; then
+    top_block=$block_num
+  fi
+done
+
+echo $top_block

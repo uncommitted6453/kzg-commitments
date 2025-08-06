@@ -34,9 +34,10 @@ kzg::trusted_setup::trusted_setup(int num_coeff) {
 
   unsigned int num_threads = std::thread::hardware_concurrency();
   
-  if (num_threads == 0) {
+  if (num_threads == 0)
     num_threads = 4;
-  } else if (num_coeff < num_threads) {
+  
+  if (num_coeff < num_threads) {
     generate_elements_range(0, num_coeff, std::cref(s_powers));
   } else {
     int elements_per_thread = num_coeff / num_threads;
@@ -73,10 +74,8 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   ZZ_p::init(z);
   
   std::ifstream file(filename, std::ios::in | std::ios::binary);
-  if (!file.is_open()) {
-    std::cerr << "failed to import" << std::endl;
-    return;
-  }
+  if (!file.is_open())
+    throw logic_error("could not open trusted setup file");
   
   uint64_t num_coeffs;
   file.read(reinterpret_cast<char*>(&num_coeffs), sizeof(num_coeffs));
@@ -87,7 +86,6 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   for (uint64_t i = 0; i < num_coeffs; i++) {
     uint32_t len;
     file.read(reinterpret_cast<char*>(&len), sizeof(len));
-    
     char buffer[G1_OCTET_SIZE];
     file.read(buffer, len);
     
@@ -96,14 +94,13 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
     if (ECP_fromOctet(&point, &oct)) {
       _G1.push_back(point);
     } else {
-      std::cerr << "point at index " << i << " is invalid" << std::endl;
+      throw logic_error("bad trusted setup file");
     }
   }
   
   for (uint64_t i = 0; i < num_coeffs; i++) {
     uint32_t len;
     file.read(reinterpret_cast<char*>(&len), sizeof(len));
-    
     char buffer[G2_OCTET_SIZE];
     file.read(buffer, len);
     
@@ -112,12 +109,11 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
     if (ECP2_fromOctet(&point, &oct)) {
       _G2.push_back(point);
     } else {
-      std::cerr << "point at index " << i << " is invalid" << std::endl;
+      throw logic_error("bad trusted setup file");
     }
   }
   
   file.close();
-  std::cout << "loaded group elements from " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 
 void kzg::trusted_setup::generate_elements_range(int start, int end, const std::vector<BIG>& s_powers) {
@@ -135,6 +131,9 @@ void kzg::trusted_setup::generate_elements_range(int start, int end, const std::
 }
 
 kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
+  if (deg(poly.get_poly()) >= _G1.size())
+    throw out_of_range("polynomial degree cannot be greater than setup size");
+  
   return kzg::commit(polyeval_G1(poly.get_poly()));
 }
 
@@ -198,8 +197,8 @@ ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
 }
 
 kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offset, int byte_length, int chunk_size) {
-  if (chunk_size > CURVE_ORDER_BYTES - 1)
-    throw invalid_argument("chunk_size must be lower than CURVE_ORDER_BYTES.");
+  if (chunk_size > MAX_CHUNK_BYTES)
+    throw invalid_argument("chunk_size must be lower than MAX_CHUNK_BYTES.");
   else if (byte_offset % chunk_size != 0)
     throw invalid_argument("byte_offset is not a multiple of chunk_size.");
   else if (byte_length % chunk_size != 0)
@@ -256,7 +255,6 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
     char buffer[G1_OCTET_SIZE];
     octet oct = {0, G1_OCTET_SIZE, buffer};
     ECP_toOctet(&oct, &_G1[i], false);
-    // std::cout << oct.len << std::endl;
     
     uint32_t len = static_cast<uint32_t>(oct.len);
     file.write(reinterpret_cast<const char*>(&len), sizeof(len));
@@ -274,6 +272,5 @@ void kzg::trusted_setup::export_setup(const std::string& filename) {
   }
   
   file.close();
-  std::cout << "exported group elements to " << filename << " with num_coeffs=" << num_coeffs << "" << std::endl;
 }
 

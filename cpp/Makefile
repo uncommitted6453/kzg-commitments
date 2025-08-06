@@ -13,7 +13,10 @@ testing/testing: testing/testing.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
 
 example/example: example/example.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
 	g++ example/example.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
-	./example/example
+	./$@
+
+demo/shared/kzg-cli: demo/shared/kzg-cli.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
+	g++ demo/shared/kzg-cli.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
 
 lib/kzg-bn158.a: config_bn158 include/NTL/config.h lib/ntl.a $(KZG_OBJ) | lib
 	ar rvs $@ $(KZG_OBJ)
