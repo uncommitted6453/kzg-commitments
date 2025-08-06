@@ -12,7 +12,7 @@
 bool all_tests() {
   srand((unsigned)time(NULL) * getpid());
   if (!random_test()) {
-    printf("FAILED random_test");
+    cout << "FAILED random_test" << endl;
     return false;
   }
   return true;
@@ -41,14 +41,24 @@ bool random_test() {
     // Stores indices of the string data such that
     //   kzg.create_proof(poly, j, k) is a proof for data[j:k]
     vector<pair<int, int>> to_verify;
+    // Same as above, but also stores the strings that we will refute.
+    vector<tuple<int, int, string>> to_refute;
     // Should go up to length instead of length - 1,
     // but create_proof seg faults when j == 0, and k == length.
     for (int j = 0; j < length - 1; ++j) {
       for (int k = 1; j + k < length; ++k) {
         to_verify.push_back(make_pair(j, k));
+
+        string substring = data.substr(j, k);
+        string str_to_refute = random_string((rand() % (length * 2)) + 1); // TODO: str length of 0 not working
+        while (substring == str_to_refute) {
+          str_to_refute = random_string((rand() % (length * 2)) + 1);
+        }
+
+        to_refute.push_back(make_tuple(j, k, str_to_refute));
       }
     }
-    if (!general_test(128, random_string(length), to_verify, {})) {
+    if (!general_test(10, data, to_verify, to_refute)) {
       return false;
     }
   }
@@ -83,12 +93,11 @@ bool general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, 
 
   for (auto s : to_refute) {
     kzg::proof s_proof = kzg.create_proof(poly, get<0>(s), get<1>(s));
-    string substring = data.substr(get<0>(s), get<1>(s));
     kzg::blob refute = kzg::blob::from_string(get<2>(s), get<0>(s));
-    if (!kzg.verify_proof(commit, s_proof, refute)) {
-      cout << "Refuted: " << get<2>(s) << endl;
+    if (!kzg.verify_proof(commit, s_proof, refute)) { // This is seg faulting with the strings to refute have 0 length.
+      cout << "Refuted (" << get<0>(s) << ", " << get<1>(s) << "): Message is " << data << " and we are refuting " << get<2>(s)  << endl;
     } else {
-      cout << "FAILED to refute: " << get<2>(s) << endl;
+      cout << "FAILED  (" << get<0>(s) << ", " << get<1>(s) << "): Message is " << data << " and we are refuting " << get<2>(s)  << endl;
       return false;
     }
   }
