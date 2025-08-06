@@ -24,9 +24,10 @@ class blob {
 private:
 vector<pair<ZZ_p, ZZ_p>> data;
 
-blob(vector<pair<ZZ_p, ZZ_p>>& _data) : data(_data) {}
-vector<pair<ZZ_p, ZZ_p>>& get_data() { return data; }
 public:
+  blob(vector<pair<ZZ_p, ZZ_p>>& _data) : data(_data) {}
+  vector<pair<ZZ_p, ZZ_p>>& get_data() { return data; }
+
   /**
   * @brief Generate a vector of evaluation points encoding a string.
   *
@@ -71,9 +72,9 @@ class poly {
 private:
   ZZ_pX data;
   
+public:
   poly(ZZ_pX _data) : data(_data) {}
   const ZZ_pX& get_poly() const { return data; }
-public:
   /**
   * @brief Constructs a polynomial fitting the evaluation points in a blob.
   * 
@@ -109,9 +110,9 @@ class commit {
 private:
   ECP curve_point;
 
+public:
   commit(ECP _curve_point) : curve_point(_curve_point) {}
   ECP& get_curve_point() { return curve_point; }
-public:
   /**
   * @brief Serialize the commit (a point on the elliptic curve) to bytes.
   * 
@@ -136,9 +137,9 @@ class proof {
 private:
   ECP curve_point;
 
+public:
   proof(ECP _curve_point) : curve_point(_curve_point) {}
   ECP& get_curve_point() { return curve_point; }
-public:
 
   /**
   * @brief Serialize the proof (a point on the elliptic curve) to bytes.
