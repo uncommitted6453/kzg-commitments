@@ -28,7 +28,7 @@ namespace kzg {
 
 extern int CURVE_ORDER_BYTES;
 
-#define MAX_CHUNK_BYTES (CURVE_ORDER_BYTES - 1)
+#define MAX_CHUNK_BYTES (kzg::CURVE_ORDER_BYTES - 1)
 
 /**
 * @brief Initialize the library.
