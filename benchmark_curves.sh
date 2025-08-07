@@ -86,7 +86,7 @@ main() {
     
     # Check if we're in the correct directory
     if [[ ! -f "Makefile" ]]; then
-        print_error "Makefile not found. Please run this script from the cpp directory."
+        print_error "Makefile not found. Please run this script from the root directory."
         exit 1
     fi
     

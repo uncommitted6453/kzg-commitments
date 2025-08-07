@@ -11,7 +11,7 @@
  * 
  * @code
  * git clone --recurse-submodules -j8 https://github.com/uncommitted6453/kzg-commitments.git
- * cd kzg-commitments/cpp
+ * cd kzg-commitments
  * make
  * @endcode
  * 
@@ -91,6 +91,6 @@
  * 
  * @section example Example
  * 
- * For a more detailed example, see cpp/example/example.cpp.
+ * For a more detailed example, see example/example.cpp.
  * 
 */
