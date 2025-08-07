@@ -123,3 +123,5 @@ else
     # Run all benchmarks
     main
 fi
+
+make clean
