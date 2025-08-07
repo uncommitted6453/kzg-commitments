@@ -11,7 +11,7 @@ using namespace NTL;
 
 /**
  * @namespace kzg
- * @brief KZG polynomial commitment scheme functions.
+ * @brief KZG polynomial commitment scheme functions
  * 
  * This namespace contains all classes and functions necessary for producing and verifying
  * KZG commitments. 
@@ -31,7 +31,7 @@ extern int CURVE_ORDER_BYTES;
 #define MAX_CHUNK_BYTES (kzg::CURVE_ORDER_BYTES - 1)
 
 /**
-* @brief Initialize the library.
+* @brief Initialize the library
 *
 * This function must be called prior to any other library function.
 */
@@ -39,14 +39,14 @@ void init();
 
 class blob {
 private:
-vector<pair<ZZ_p, ZZ_p>> data;
+  vector<pair<ZZ_p, ZZ_p>> data;
 
 public:
   blob(vector<pair<ZZ_p, ZZ_p>>& _data) : data(_data) {}
   vector<pair<ZZ_p, ZZ_p>>& get_data() { return data; }
 
   /**
-  * @brief Generate a vector of evaluation points encoding a string.
+  * @brief Generate a vector of evaluation points encoding a string
   *
   * Use this function along with poly::from_blob to obtain a polynomial 
   * encoding your string that can be committed to. 
@@ -57,7 +57,7 @@ public:
   static blob from_string(string s);
 
   /**
-  * @brief Generate a vector of evaluation points encoding a string.
+  * @brief Generate a vector of evaluation points encoding a string
   *
   * Use this function along with poly::from_blob to obtain a polynomial 
   * encoding your string that can be committed to. 
@@ -70,17 +70,18 @@ public:
   static blob from_string(string s, int offset);
  
   /**
-  * @brief Generate a vector of evaluation points encoding a buffer of bytes.
+  * @brief Generate a vector of evaluation points encoding a buffer of bytes
   *
   * Each point represents chunk_size bytes. Use this function along with 
   * poly::from_blob to obtain a polynomial encoding your data that can be
   * committed to or used in verification. 
   *
   * @param bytes The byte buffer that you would like to encode
-  * @param byte_offset The offset into the buffer to begin encoding
-  * @param byte_length The number of bytes that should be encoded from the offset
-  * @param chunk_size The number of bytes that each point represents, MUST be less than kzg::CURVE_ORDER_BYTES - 1
+  * @param byte_offset The offset into the buffer to begin encoding (must be multiple of chunk_size)
+  * @param byte_length The number of bytes that should be encoded from the offset (must be multiple of chunk_size)
+  * @param chunk_size The number of bytes that each point represents (must be at most MAX_CHUNK_BYTES)
   * @return A blob object containing the vector of evaluation points
+  * @throws invalid_argument if parameters don't meet the required constraints
   */
   static blob from_bytes(const uint8_t* bytes, int byte_offset, int byte_length, int chunk_size);
 };
@@ -93,9 +94,9 @@ public:
   poly(ZZ_pX _data) : data(_data) {}
   const ZZ_pX& get_poly() const { return data; }
   /**
-  * @brief Constructs a polynomial fitting the evaluation points in a blob.
+  * @brief Constructs a polynomial fitting the evaluation points in a blob
   * 
-  * A standard flow would be to generate a blob from the data you would like to commit or verify
+  * A standard workflow would be to generate a blob from the data you would like to commit or verify
   * and then use this function to obtain a polynomial that can be used with KZG. 
   * 
   * @param blob The evaluation points that you want to generate a polynomial for
@@ -104,21 +105,21 @@ public:
   static poly from_blob(blob blob);
 
   /**
-  * @brief Serialize the polynomial to bytes.
+  * @brief Serialize the polynomial into bytes
   * 
-  * Use this method is recommended for transmission or storage of the polynomial.
+  * Use of this method is recommended for transmission or storage of the polynomial.
   * 
-  * @return A vector of bytes representing the polynomial.
+  * @return A vector of bytes representing the polynomial
   */
   std::vector<uint8_t> serialize();
   
   /**
-  * @brief Deserialize the polynomial to bytes.
+  * @brief Deserialize the polynomial from bytes
   * 
-  * Use this method is recommended for transmission or storage of the polynomial.
+  * Use of this method is recommended for transmission or storage of the polynomial.
   * 
   * @param bytes The vector of bytes containing the serialized polynomial object
-  * @return A vector of bytes representing the polynomial.
+  * @return The deserialized polynomial object
   */
   static poly deserialize(const std::vector<uint8_t>&);
 };
@@ -131,21 +132,21 @@ public:
   commit(ECP _curve_point) : curve_point(_curve_point) {}
   ECP& get_curve_point() { return curve_point; }
   /**
-  * @brief Serialize the commit (a point on the elliptic curve) to bytes.
+  * @brief Serialize the commit (a point on the elliptic curve) into bytes
   * 
-  * Use this method is recommended for transmission or storage of the proof.
+  * Use of this method is recommended for transmission or storage of the proof.
   * 
-  * @return A vector of bytes representing the commit.
+  * @return A vector of bytes representing the commit
   */
   std::vector<uint8_t> serialize();
   
   /**
-  * @brief Deserialize the commit (a point on the elliptic curve) to bytes.
+  * @brief Deserialize the commit (a point on the elliptic curve) from bytes
   * 
-  * Use this method is recommended for transmission or storage of the commit.
+  * Use of this method is recommended for transmission or storage of the commit.
   * 
   * @param bytes The vector of bytes containing the serialized commit object
-  * @return A vector of bytes representing the commit.
+  * @return The deserialized commit object
   */
   static commit deserialize(const std::vector<uint8_t>&);
 };
@@ -159,18 +160,18 @@ public:
   ECP& get_curve_point() { return curve_point; }
 
   /**
-  * @brief Serialize the proof (a point on the elliptic curve) to bytes.
+  * @brief Serialize the proof (a point on the elliptic curve) into bytes
   * 
-  * Use this method is recommended for transmission or storage of the proof.
+  * Use of this method is recommended for transmission or storage of the proof.
   * 
-  * @return A vector of bytes representing the proof.
+  * @return A vector of bytes representing the proof
   */
   std::vector<uint8_t> serialize();
 
   /**
-  * @brief Deserialize the proof (a point on the elliptic curve) from bytes.
+  * @brief Deserialize the proof (a point on the elliptic curve) from bytes
   * 
-  * Use this method is recommended for transmission or storage of the proof.
+  * Use of this method is recommended for transmission or storage of the proof.
   * 
   * @param bytes The vector of bytes containing the serialized proof object
   * @return The deserialized proof object
@@ -190,20 +191,22 @@ private:
 
 public:
   /**
-  * @brief Performs the trusted setup step of the KZG commitment scheme.
+  * @brief Performs the trusted setup step of the KZG commitment scheme
   * 
-  * Computes the group elements G1[s^i] and G2[s^i], up to num_coeff. The 
-  * parameter num_coeff determines the maximum degree of polynomials 
-  * that can be committed with the setup. 
+  * Computes the group elements G1[s^i] and G2[s^i], up to num_coeff. The
+  * maximum degree of a polynomial that can be committed with this setup
+  * is num_coeff - 1.
   * 
-  * @param num_coeff The number of group elements to generate. The maximum value for num_coeff is MAX_CHUNK_BYTES.
+  * @param num_coeff The number of group elements to generate (num_coeff > 1)
+  * @throws invalid_argument if the constraint isn't met
   */
   trusted_setup(int num_coeff);
   
   /**
-  * @brief Loads a trusted setup from a file exported with kzg::trusted_setup::export_setup.
+  * @brief Loads a trusted setup from a file exported with kzg::trusted_setup::export_setup
   * 
   * @param filename Path to the binary file containing the trusted setup data
+  * @throws runtime_error for a inaccessible / bad file
   */
   trusted_setup(const std::string& filename);
   
@@ -213,8 +216,9 @@ public:
   * Computes the commitment C = [P(s)]₁ where P is the polynomial and s is the
   * secret value from the trusted setup. The commitment is a point on the G1 curve.
   * 
-  * @param poly The polynomial to create a commitment for
+  * @param poly The polynomial to create a commitment for (polynomial degree be at most one less than the setup size)
   * @return A KZG commitment object containing the G1 curve point
+  * @throws invalid_argument if constraint not met
   */
   commit create_commit(const kzg::poly& poly);
   
@@ -239,7 +243,7 @@ public:
   * @param poly The polynomial to create a proof for
   * @param byte_offset Starting byte position (must be multiple of chunk_size)
   * @param byte_length Number of bytes to prove (must be multiple of chunk_size)
-  * @param chunk_size Size of each chunk in bytes (must be less than MAX_CHUNK_BYTES)
+  * @param chunk_size Size of each chunk in bytes (must be at most MAX_CHUNK_BYTES)
   * @return A KZG proof object
   * @throws invalid_argument if parameters don't meet the required constraints
   */
@@ -256,6 +260,7 @@ public:
   * @param chunk_offset Starting chunk position
   * @param chunk_length Number of chunks to prove
   * @return A KZG proof object
+  * @throws invalid_argument if chunk_length < 1
   */
   proof create_proof(const kzg::poly& poly, int chunk_offset, int chunk_length);
   
@@ -269,6 +274,7 @@ public:
   * @param proof The proof to verify
   * @param expected_data The blob containing expected evaluation points and values
   * @return true if the proof is valid, false otherwise
+  * @throws invalid_argument if expected_data is empty
   */
   bool verify_proof(commit& commit, proof& proof, blob& expected_data);
   
