@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "[Peer C] verifying transaction from peer B"
 
@@ -19,7 +19,7 @@ for i in {5..9}; do
   offset=${proof_args[3]}
   data=${proof_args[4]}
 
-  echo "[Peer C] verifying proof against for block #${payment_args[$i]}"
+  echo "[Peer C] verifying proof against block #${payment_args[$i]}"
   if kzg-cli verify $commit $proof $offset $data; then
     echo "[Peer C] verified."
   fi
