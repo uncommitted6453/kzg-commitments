@@ -19,6 +19,10 @@ void kzg::init() {
 }
 
 kzg::trusted_setup::trusted_setup(int num_coeff, int num_secret_bytes) {
+  if (num_coeff < 2) {
+    throw invalid_argument("num_coeff must be greater than 1.");
+  }
+
   BIG BIG_s;
   generate_random_BIG(BIG_s);
 
@@ -238,7 +242,7 @@ bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kz
   if (points.size() < 1)
     throw invalid_argument("expected_data size must be 1 or greater");
   else if (points.size() >= _G1.size())
-    throw invalid_argument("expected_data size cannot be or exceed setup size");
+    return false;
   
   ZZ_pX I, Z;
   linear_roots_and_polyfit(I, Z, points);
