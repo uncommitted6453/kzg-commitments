@@ -6,21 +6,13 @@ KZG_OBJ=$(patsubst src/%.cpp, obj/%.o, $(KZG_SRC))
 KZG_LIB=miracl-core/cpp/core.a ntl/src/ntl.a
 
 all: testing/testing
+	testing/testing
 
 testing/testing: testing/testing.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
 	g++ testing/testing.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
-	./testing/testing
-
-example/example: example/example.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
-	g++ example/example.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
-	./$@
 
 demo/shared/kzg-cli: demo/shared/kzg-cli.cpp lib/kzg-bn254.a lib/core.a lib/ntl.a
 	g++ demo/shared/kzg-cli.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o $@
-
-benchmark/benchmark: benchmark/benchmark.cpp lib/kzg-bls12381.a lib/core.a lib/ntl.a
-	g++ benchmark/benchmark.cpp -Iinclude lib/kzg-bls12381.a lib/core.a lib/ntl.a -lgmp -o $@
-	./benchmark/benchmark
 
 benchmark/benchmark-bn158: benchmark/benchmark.cpp lib/kzg-bn158.a lib/core.a lib/ntl.a
 	g++ benchmark/benchmark.cpp -Iinclude lib/kzg-bn158.a lib/core.a lib/ntl.a -lgmp -o $@
