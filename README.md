@@ -1,11 +1,18 @@
 # kzg-commitments
 A C++ library implementing the KZG (Kate-Zaverucha-Goldberg) commitment scheme.
 
-## Documentation
+# Table of Contents
+- [Documentation](#documentation)
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Testing](#testing)
+- [Benchmarking](#benchmarking)
+
+# Documentation
 
 https://uncommitted6453.github.io/kzg-commitments/index.html
 
-## Installation
+# Installation
 
 Run the following to build the library:
 
@@ -20,8 +27,57 @@ with your toolchain. For example, with g++, this might look like:
 ```cpp
 g++ my-project.cpp -Iinclude lib/kzg-bn254.a lib/core.a lib/ntl.a -lgmp -o a.out
 ```
+# Getting Started
 
-## Benchmarking
+Here is some sample code for using the kzg-commitments library:
+
+```c++
+// As KZG is a polynomial commitment scheme, You must encode your data into
+// a polynomial first using blob::from_string or blob::from_data
+string data = "hello there my name is bob";
+kzg::blob blob = kzg::blob::from_string(data);
+kzg::poly poly = kzg::poly::from_blob(blob);
+
+// Create a commitment to your polynomial. 
+kzg::commit commit = kzg.create_commit(poly);
+
+// You can verify a commit matches a polynomial
+if (kzg.verify_commit(commit, poly))
+  cout << "verified: commit is correct" << endl;
+
+// Or, as KZG allows for partial reveals,  you can create proofs for portions of the data
+kzg::proof hello_proof = kzg.create_proof(poly, 0, strlen("hello"));
+
+// And verify proofs
+kzg::blob verify = kzg::blob::from_string("hello", 0);
+if (kzg.verify_proof(commit, hello_proof, verify))
+  cout << "verified: hello" << endl;
+```
+
+The output will be as follows:
+
+```
+verified: commit is correct
+verified: hello
+```
+
+# Testing
+
+The tests will be run automatically upon building the program:
+
+```sh
+cd kzg-commitments/cpp
+make
+```
+
+but you can also run the program manually with 
+
+```sh
+cd kzg-commitments/cpp/testing
+./testing
+```
+
+# Benchmarking
 
 Run the benchmarks yourself by running the following commands:
 
