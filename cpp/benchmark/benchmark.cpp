@@ -7,6 +7,9 @@
 
 using namespace std::chrono;
 
+const int MAX_DEGREE_BENCH_POLYNOMIAL = 64;
+const int POLYNOMIAL_BENCH_MAX_DEGREE = 8192;  // Increased to provide headroom for degree 4096
+
 string generateRandomString(int length)
 {
   const string characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -26,7 +29,6 @@ string generateRandomString(int length)
 
 void benchmark_polynomial_max_degree(int max_degree)
 {
-  
   // Measure setup time
   auto setup_start = high_resolution_clock::now();
   kzg::trusted_setup kzg(max_degree);
@@ -34,8 +36,10 @@ void benchmark_polynomial_max_degree(int max_degree)
   std::chrono::duration<double, std::milli> setup_duration = setup_end - setup_start;
   
   // Prepare test data
-  string rand_str1 = generateRandomString(32);
-  string rand_str2 = generateRandomString(32);
+  int first_string_length = (MAX_DEGREE_BENCH_POLYNOMIAL + 1) / 2;
+  int second_string_length = MAX_DEGREE_BENCH_POLYNOMIAL + 1 - (MAX_DEGREE_BENCH_POLYNOMIAL + 1) / 2;
+  string rand_str1 = generateRandomString(first_string_length);
+  string rand_str2 = generateRandomString(second_string_length);
   kzg::blob blob = kzg::blob::from_string(rand_str1 + rand_str2);
   kzg::poly poly = kzg::poly::from_blob(blob);
   
@@ -60,7 +64,7 @@ void benchmark_polynomial_max_degree(int max_degree)
   std::chrono::duration<double, std::milli> verify_duration = verify_end - verify_start;
   
   cout << "Max Degree: " << std::setw(4) << max_degree
-       << " | Degree: " << std::setw(4) << 63
+       << " | Degree: " << std::setw(4) << MAX_DEGREE_BENCH_POLYNOMIAL - 1
        << " | Setup: " << std::setw(8) << std::fixed << std::setprecision(3) << setup_duration.count() << "ms | "
        << "Commit: " << std::setw(7) << std::fixed << std::setprecision(3) << commit_duration.count() << "ms | "
        << "Proof: " << std::setw(7) << std::fixed << std::setprecision(3) << proof_duration.count() << "ms | "
@@ -72,7 +76,7 @@ void benchmark_polynomial_degree(int degree)
 {
   // Measure setup time
   auto setup_start = high_resolution_clock::now();
-  kzg::trusted_setup kzg(128);
+  kzg::trusted_setup kzg(POLYNOMIAL_BENCH_MAX_DEGREE);
   auto setup_end = high_resolution_clock::now();
   std::chrono::duration<double, std::milli> setup_duration = setup_end - setup_start;
   
@@ -104,7 +108,7 @@ void benchmark_polynomial_degree(int degree)
   auto verify_end = high_resolution_clock::now();
   std::chrono::duration<double, std::milli> verify_duration = verify_end - verify_start;
   
-  cout << "Max Degree: " << std::setw(4) << 128
+  cout << "Max Degree: " << std::setw(4) << POLYNOMIAL_BENCH_MAX_DEGREE
        << " | Degree: " << std::setw(3) << degree
        << " | Setup: " << std::setw(8) << std::fixed << std::setprecision(3) << setup_duration.count() << "ms | "
        << "Commit: " << std::setw(7) << std::fixed << std::setprecision(3) << commit_duration.count() << "ms | "
@@ -117,13 +121,13 @@ int main(int argc, char *argv[])
 {
   kzg::init();
   
-  cout << "=== Benchmarking Trusted Setup Max Degree with degree=63 ===" << endl;
+  cout << "=== Benchmarking Trusted Setup Max Degree with degree=" << MAX_DEGREE_BENCH_POLYNOMIAL << " ===" << endl;
   for (int max_degree = 128; max_degree <= 4096; max_degree *= 2) {
     benchmark_polynomial_max_degree(max_degree);
   }
 
-  cout << "\n=== Benchmarking Polynomial Degree with Max Degree=128 ===" << endl;
-  for (int degree = 10; degree <= 20; degree += 2) {
+  cout << "\n=== Benchmarking Polynomial Degree with Max Degree=" << POLYNOMIAL_BENCH_MAX_DEGREE << " ===" << endl;
+  for (int degree = 128; degree <= 4096; degree *= 2) {
     benchmark_polynomial_degree(degree);
   }
   
