@@ -8,7 +8,7 @@
 using namespace std::chrono;
 
 const int MAX_DEGREE_BENCH_POLYNOMIAL = 64;
-const int POLYNOMIAL_BENCH_MAX_DEGREE = 8192;  // Increased to provide headroom for degree 4096
+const int POLYNOMIAL_BENCH_MAX_DEGREE = 5000;
 
 string generateRandomString(int length)
 {
