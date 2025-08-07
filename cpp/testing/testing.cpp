@@ -10,24 +10,30 @@
 #include <unistd.h>
 #include <vector>
 
+void check_test(bool status, string test_name);
 void example_test();
 void random_test(int length, int num_coeff, int runs);
 void empty_proof_test();
 void empty_verify_test();
-void poly_degree_0_test();
+void invalid_setup_test();
+void poly_empty_test();
 void poly_degree_1_test();
 void poly_degree_10_test();
 void chunking_test();
 void chunking_invalid_args_test();
 void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute);
 string random_string(const int len);
+void generate_expected_test_data(
+    vector<pair<int, int>>& to_verify,
+    vector<tuple<int, int, string>>& to_refute,
+    int length,
+    const string& data);
 
 int main() {
-  // Only prints stuff when things fail.
   kzg::init();
-  // empty_proof_test();  // seg faults!
-  // empty_verify_test(); // seg faults
-  poly_degree_0_test();
+  empty_proof_test();
+  empty_verify_test();
+  invalid_setup_test();
   poly_degree_1_test();
   poly_degree_10_test();
   chunking_test();
@@ -37,15 +43,14 @@ int main() {
 
 void example_test() {
   string data = "hello there my name is bob";
-
-  return general_test(128, data,
-    {
-      {0, strlen("hello")},
-      {strlen("hello there my "), strlen("name is")},
-      {strlen("hello there my name is "), strlen("bob")}
-    },
-    {
-      {strlen("hello there my name is "), strlen("bob"), "alice"}
+  return general_test(
+    128,
+    data, {
+      { 0, strlen("hello") },
+      { strlen("hello there my "), strlen("name is") },
+      { strlen("hello there my name is "), strlen("bob")}
+    }, {
+      { strlen("hello there my name is "), strlen("bob"), "alice" }
     }
   );
 }
@@ -53,47 +58,24 @@ void example_test() {
 void random_test(int length, int num_coeff, int runs) {
   for (int i = 0; i < runs; ++i) {
     string data = random_string(length);
-    // Stores indices of the string data such that
-    //   kzg.create_proof(poly, j, k) is a proof for data[j:k]
     vector<pair<int, int>> to_verify;
-    // Same as above, but also stores the strings that we will refute.
     vector<tuple<int, int, string>> to_refute;
-    // Should go up to length instead of length - 1,
-    // but create_proof seg faults when j == 0, and k == length.
-    for (int j = 0; j < length - 1; ++j) {
-      for (int k = 1; j + k < length; ++k) {
-        to_verify.push_back(make_pair(j, k));
-
-        string substring = data.substr(j, k);
-        string str_to_refute = random_string((rand() % (length * 2)) + 1); // TODO: str length of 0 not working
-        while (substring == str_to_refute) {
-          str_to_refute = random_string((rand() % (length * 2)) + 1);
-        }
-
-        to_refute.push_back(make_tuple(j, k, str_to_refute));
-      }
-    }
+    generate_expected_test_data(to_verify, to_refute, length, data);
     general_test(num_coeff, data, to_verify, to_refute);
   }
 }
 
-void empty_proof_test() { // Still getting seg faults.
+void empty_proof_test() {
   kzg::trusted_setup kzg(128);
   kzg::blob blob = kzg::blob::from_string("some data here");
   kzg::poly poly = kzg::poly::from_blob(blob);
   bool exception = false;
-  try {
-    kzg::proof empty_proof = kzg.create_proof(poly, 5, 0);
-  } catch(...) {
-    exception = true;
-  }
-
-  if (!exception) {
-    cout << "FAILED empty_proof_test" << endl;
-  }
+  try { kzg.create_proof(poly, 5, 0); }
+  catch(...) { exception = true; }
+  check_test(exception, "empty proof is invalid");
 }
 
-void empty_verify_test() { // Still getting seg faults
+void empty_verify_test() {
   kzg::trusted_setup kzg(128);
   kzg::blob blob = kzg::blob::from_string("some data here");
   kzg::poly poly = kzg::poly::from_blob(blob);
@@ -102,170 +84,120 @@ void empty_verify_test() { // Still getting seg faults
   kzg::proof empty_proof = kzg.create_proof(poly, strlen("some da"), strlen("ta"));
   kzg::blob refute = kzg::blob::from_string("", strlen("some da"));
   bool exception = false;
-  try {
-    kzg.verify_proof(commit, empty_proof, refute);
-  } catch(...) {
-    exception = true;
-  }
-
-  if (!exception) {
-    cout << "FAILED empty_verify_test" << endl;
-  }
+  try { kzg.verify_proof(commit, empty_proof, refute); }
+  catch(...) { exception = true; }
+  check_test(exception, "empty verifification is invalid");
 }
 
-void poly_degree_0_test() {
+void invalid_setup_test() {
   bool exception = false;
-  try {
-    kzg::trusted_setup kzg(0);
-  } catch (...) {
-    exception = true;
-  }
-
-  if (!exception) {
-    cout << "FAILED 0 degree polynomial, throw exception (no exception)" << endl;
-  }
+  try { kzg::trusted_setup kzg(0); }
+  catch (...) { exception = true; }
+  check_test(exception, "empty polynomial is invalid");
+  
+  exception = false;
+  try { kzg::trusted_setup kzg(1); }
+  catch (...) { exception = true; }
+  check_test(exception, "0 degree polynomial is invalid");
 }
 
 void poly_degree_1_test() {
-  kzg::trusted_setup kzg(1);
+  kzg::trusted_setup kzg(2);
   
-  string data = "KK";
+  string data = "K";
   kzg::blob blob = kzg::blob::from_string(data);
   kzg::poly poly = kzg::poly::from_blob(blob);
-
-  bool exception = false;
-  try {
-    kzg.create_commit(poly); // Should this throw an exception here?
-  } catch (...) {
-    exception = true;
-  }
-
-  if (!exception) {
-    cout << "FAILED 1 degree polynomial, 2 character commit test (no exception)" << endl;
-  }
-  
-  data = "K";
-  blob = kzg::blob::from_string(data);
-  poly = kzg::poly::from_blob(blob);
   kzg::commit commit = kzg.create_commit(poly);
-
-  if (!kzg.verify_commit(commit, poly)) {
-    cout << "FAILED 1 degree polynomial, commit verification" << endl;
-    return;
-  }
+  check_test(kzg.verify_commit(commit, poly), "1 degree polynomial, 1 character commit verification");
 
   kzg::proof proof = kzg.create_proof(poly, 0, strlen("K"));
-
   kzg::blob verify = kzg::blob::from_string("K", 0);
-  if (!kzg.verify_proof(commit, proof, verify)) {
-    cout << "FAILED 1 degree polynomial, proof verification" << endl;
-  }
-
+  check_test(kzg.verify_proof(commit, proof, verify), "1 degree polynomial, 1 character proof verification");
+  
+  bool exception = false;
+  data = "AB";
+  blob = kzg::blob::from_string(data);
+  poly = kzg::poly::from_blob(blob);
+  try { kzg.create_commit(poly); }
+  catch (...) { exception = true; }
+  check_test(exception, "1 degree polynomial, 2 character commit is invalid");
+  
   kzg::blob refute1 = kzg::blob::from_string("k", 0);
-  kzg::blob refute2 = kzg::blob::from_string("K ", 0);
-  if (kzg.verify_proof(commit, proof, refute1)) {
-    cout << "FAILED 1 degree polynomial, proof refutation 1" << endl;
-  }
-  if (kzg.verify_proof(commit, proof, refute2)) {
-    cout << "FAILED 1 degree polynomial, proof refutation 2" << endl;
-  }
+  kzg::blob refute2 = kzg::blob::from_string("j", 0);
+  check_test(!kzg.verify_proof(commit, proof, refute1), "1 degree polynomial, proof refutation 1");
+  check_test(!kzg.verify_proof(commit, proof, refute2), "1 degree polynomial, proof refutation 2");
+  
+  exception = false;
+  kzg::blob invalid = kzg::blob::from_string("K ", 0);
+  try { kzg.verify_proof(commit, proof, invalid); }
+  catch (...) { exception = true; }
+  check_test(exception, "1 degree polynomial, 2 character proof is invalid");
 }
 
 void poly_degree_10_test() {
-  kzg::trusted_setup kzg(10);
+  kzg::trusted_setup kzg(11);
   
-  string data = "ABCDEFGHIJK";
+  string data = "CEBIDKAGFJH";
   kzg::blob blob = kzg::blob::from_string(data);
   kzg::poly poly = kzg::poly::from_blob(blob);
 
   bool exception = false;
-  try {
-    kzg.create_commit(poly); // Should this throw an exception here?
-  } catch (...) {
-    exception = true;
-  }
-
-  if (!exception) {
-    cout << "FAILED 10 degree polynomial, 11 character commit test (no exception)" << endl;
-  }
+  try { kzg.create_commit(poly); }
+  catch (...) { exception = true; }
+  check_test(exception, "10 degree polynomial, 11 character commit is invalid");
   
-  data = "ABCDEFGHIJ";
+  data = "CEBIDAGFJH";
   blob = kzg::blob::from_string(data);
   poly = kzg::poly::from_blob(blob);
-  kzg::commit commit = kzg.create_commit(poly);
+  kzg::commit commit = kzg.create_commit(poly);  
+  check_test(kzg.verify_commit(commit, poly), "10 degree polynomial, commit verification");
 
-  if (!kzg.verify_commit(commit, poly)) {
-    cout << "FAILED 10 degree polynomial, commit verification" << endl;
-    return;
-  }
-
-  kzg::proof proof = kzg.create_proof(poly, strlen("AB"), strlen("CDE"));
-
-  kzg::blob verify = kzg::blob::from_string("CDE", strlen("AB"));
-  if (!kzg.verify_proof(commit, proof, verify)) {
-    cout << "FAILED 10 degree polynomial, proof verification" << endl;
-  }
+  kzg::proof proof = kzg.create_proof(poly, strlen("CE"), strlen("BID"));
+  kzg::blob verify = kzg::blob::from_string("BID", strlen("CE"));
+  check_test(kzg.verify_proof(commit, proof, verify), "10 degree polynomial, proof verification");
 
   kzg::blob refute1 = kzg::blob::from_string("CDEF", 0);
   kzg::blob refute2 = kzg::blob::from_string("CD", 0);
-  if (kzg.verify_proof(commit, proof, refute1)) {
-    cout << "FAILED 10 degree polynomial, proof refutation 1" << endl;
-  }
-  if (kzg.verify_proof(commit, proof, refute2)) {
-    cout << "FAILED 10 degree polynomial, proof refutation 2" << endl;
-  }
+  check_test(!kzg.verify_proof(commit, proof, refute1), "10 degree polynomial, proof refutation 1");
+  check_test(!kzg.verify_proof(commit, proof, refute2), "10 degree polynomial, proof refutation 2");
 }
 
 void chunking_test() {
   kzg::trusted_setup kzg(128);
 
   unsigned char data[] = "123456789abcdef";
-  kzg::blob blob1 = kzg::blob::from_bytes(data, 0, sizeof(data), 1);
-  kzg::blob blob2 = kzg::blob::from_bytes(data, 0, sizeof(data), 2);
-  bool exception = false;
-  try {
-    kzg::blob blob3 = kzg::blob::from_bytes(data, 0, sizeof(data), 3);
-  }
-  catch (...) {
-    exception = true;
-  }
-  if (!exception) {
-    cout << "FAILED chunking, chunks do not divide data" << endl;
-  }
-  kzg::blob blob4 = kzg::blob::from_bytes(data, 0, sizeof(data), 4);
 
+  bool exception = false;
+  try { kzg::blob::from_bytes(data, 0, sizeof(data), 3); }
+  catch (...) { exception = true; }
+  check_test(exception, "chunking, chunks do not divide data");
+  
+  kzg::blob blob1 = kzg::blob::from_bytes(data, 0, sizeof(data), 1);
   kzg::poly poly = kzg::poly::from_blob(blob1);
   kzg::commit commit = kzg.create_commit(poly);
-  if (!kzg.verify_commit(commit, poly)) {
-    cout << "FAILED chunking, commit verification for blob1" << endl;
-  }
+  check_test(kzg.verify_commit(commit, poly), "chunking, commit verification for blob1");
+
   kzg::proof proof = kzg.create_proof(poly, 3, 9, 1);
   kzg::blob verify = kzg::blob::from_bytes((uint8_t*) "456789abc", 3, 9, 1);
-  if (!kzg.verify_proof(commit, proof, verify)) {
-    cout << "FAILED chunking, proof verification for blob1" << endl;
-  }
+  check_test(kzg.verify_proof(commit, proof, verify), "chunking, proof verification for blob1");
 
+  kzg::blob blob2 = kzg::blob::from_bytes(data, 0, sizeof(data), 2);
   poly = kzg::poly::from_blob(blob2);
   commit = kzg.create_commit(poly);
-  if (!kzg.verify_commit(commit, poly)) {
-    cout << "FAILED chunking, commit verification for blob2" << endl;
-  }
+  check_test(kzg.verify_commit(commit, poly), "chunking, commit verification for blob2");
+  
   proof = kzg.create_proof(poly, 2, 10, 2);
   verify = kzg::blob::from_bytes((uint8_t*) "3456789abc", 2, 10, 2);
-  if (!kzg.verify_proof(commit, proof, verify)) {
-    cout << "FAILED chunking, proof verification for blob2" << endl;
-  }
+  check_test(kzg.verify_proof(commit, proof, verify), "chunking, proof verification for blob2");
 
+  kzg::blob blob4 = kzg::blob::from_bytes(data, 0, sizeof(data), 4);
   poly = kzg::poly::from_blob(blob4);
   commit = kzg.create_commit(poly);
-  if (!kzg.verify_commit(commit, poly)) {
-    cout << "FAILED chunking, commit verification for blob4" << endl;
-  }
+  check_test(kzg.verify_commit(commit, poly), "chunking, commit verification for blob4");
+  
   proof = kzg.create_proof(poly, 4, 8, 4);
   verify = kzg::blob::from_bytes((uint8_t*) "56789abc", 4, 8, 4);
-  if (!kzg.verify_proof(commit, proof, verify)) {
-    cout << "FAILED chunking, proof verification for blob4" << endl;
-  }
+  check_test(kzg.verify_proof(commit, proof, verify), "chunking, proof verification for blob4");
 }
 
 void chunking_invalid_args_test() {
@@ -276,38 +208,25 @@ void chunking_invalid_args_test() {
 
   kzg::poly poly = kzg::poly::from_blob(blob1);
   kzg::commit commit = kzg.create_commit(poly);
-  if (!kzg.verify_commit(commit, poly)) {
-    cout << "FAILED chunking invalid args, commit verification" << endl;
-  }
+  check_test(kzg.verify_commit(commit, poly), "chunking invalid args, commit verification");
 
   bool exception = false;
-  try {
-    kzg.create_proof(poly, 0, 5, 4);
-  } catch (...) {
-    exception = true;
-  }
-  if (!exception) {
-    cout << "FAILED chunking invalid args, invalid byte length" << endl;
-  }
+  try { kzg.create_proof(poly, 0, 5, 4); }
+  catch (...) { exception = true; }
+  check_test(exception, "chunking invalid args, invalid byte length");
+
   exception = false;
-  try {
-    kzg.create_proof(poly, 2, 8, 4);
-  } catch (...) {
-    exception = true;
-  }
-  if (!exception) {
-    cout << "FAILED chunking invalid args, invalid byte offset" << endl;
-  }
-  // TODO: test CURVE_ORDER_BYTES
-  exception = false;
-  try {
-    kzg.create_proof(poly, 12, 12, 1);
-  } catch (...) {
-    exception = true;
-  }
-  if (!exception) {
-    cout << "FAILED chunking invalid args, bytes out of range of data" << endl;
-  }
+  try { kzg.create_proof(poly, 2, 8, 4); }
+  catch (...) { exception = true; }
+  check_test(exception, "chunking invalid args, invalid byte offset");
+  
+  // TODO: test MAX_CHUNK_BYTES
+  // NOTE: you can technically evaluate the polynomial at any point
+  // the poly class doesn't save any data regarding blob, offset size etc. so this evaluation should be valid
+  // exception = false;
+  // try { kzg.create_proof(poly, 12, 12, 1); }
+  // catch (...) { exception = true; }
+  // check_test(exception, "chunking invalid args, bytes out of range of data");
 }
 
 void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute) {
@@ -360,4 +279,35 @@ string random_string(const int len) {
   }
   
   return tmp_s;
+}
+
+// to-verify: Stores indices of the string data such that
+//   kzg.create_proof(poly, j, k) is a proof for data[j:k]
+// to_refute: Same as above, but also stores the strings that we will refute.
+void generate_expected_test_data(
+  vector<pair<int, int>>& to_verify,
+  vector<tuple<int, int, string>>& to_refute,
+  int length,
+  const string& data
+) {
+  // Should go up to length instead of length - 1,
+  // but create_proof seg faults when j == 0, and k == length.
+  for (int j = 0; j < length - 1; ++j) {
+    for (int k = 1; j + k < length; ++k) {
+      to_verify.push_back(make_pair(j, k));
+
+      string substring = data.substr(j, k);
+      string str_to_refute = random_string((rand() % (length * 2)) + 1); // TODO: str length of 0 not working
+      while (substring == str_to_refute) {
+        str_to_refute = random_string((rand() % (length * 2)) + 1);
+      }
+
+      to_refute.push_back(make_tuple(j, k, str_to_refute));
+    }
+  }
+}
+
+void check_test(bool status, string test_name) {
+  if (status) cout << "PASSED [" << test_name << "]" << endl;
+  else cout << "FAILED [" << test_name << "]" << endl;
 }
