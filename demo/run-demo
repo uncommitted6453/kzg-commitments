@@ -4,7 +4,7 @@ export SHARED_FOLDER=$(pwd)/shared
 export PATH="$PATH:$SHARED_FOLDER"
 
 clean() {
-  # rm -r shared/kzg_public
+  rm -r shared/kzg_public
   rm -r shared/ledger
   
   rm -f peer-a/kzg_public
@@ -19,7 +19,7 @@ clean() {
 kzg_setup() {
   echo "generating KZG trusted setup with 65536 terms..."
   cd shared
-  # kzg-cli setup 65536
+  kzg-cli setup 65536
   rm -f ../peer-a/kzg_public
   rm -f ../peer-b/kzg_public
   cp kzg_public ../peer-a/kzg_public
