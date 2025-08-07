@@ -349,8 +349,8 @@ void generate_expected_test_data(
 
 // from https://gist.github.com/Kielx/2917687bc30f567d45e15a4577772b02
 #define RESET   "\033[0m"
-#define RED     "\033[31m"      /* Red */
-#define GREEN   "\033[32m"      /* Green */
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
 
 void check_test(bool status, string test_name) {
   if (status) cout << GREEN << "PASSED" << RESET << " [" << test_name << "]" << endl;
