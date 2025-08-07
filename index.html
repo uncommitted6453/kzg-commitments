@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.5"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>kzg-commitments: KZG Commitments Library - Getting Started</title>
+<title>kzg-commitments: Main Page</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -69,92 +69,10 @@ $(function() {
 </div>
 </div>
 
-<div><div class="header">
-  <div class="headertitle"><div class="title">KZG Commitments Library - Getting Started </div></div>
+<div class="header">
+  <div class="headertitle"><div class="title">kzg-commitments Documentation</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1><a class="anchor" id="overview"></a>
-Overview</h1>
-<p >This library provides an implementation of the KZG (Kate-Zaverucha-Goldberg) polynomial commitment scheme.</p>
-<h1><a class="anchor" id="installation"></a>
-Installation</h1>
-<p >Run the following to build the library:</p>
-<div class="fragment"><div class="line">git clone --recurse-submodules -j8 https:<span class="comment">//github.com/uncommitted6453/kzg-commitments.git</span></div>
-<div class="line">cd <a class="code hl_namespace" href="namespacekzg.html">kzg</a>-commitments/cpp</div>
-<div class="line">make</div>
-<div class="ttc" id="anamespacekzg_html"><div class="ttname"><a href="namespacekzg.html">kzg</a></div><div class="ttdoc">KZG polynomial commitment scheme functions.</div></div>
-</div><!-- fragment --><p >Then, copy the contents of the generated lib and include folders into your project and link them when compiling with your toolchain. For example, with g++ it might look like: </p><div class="fragment"><div class="line">g++ my-project.cpp -Iinclude lib/<a class="code hl_namespace" href="namespacekzg.html">kzg</a>-bn254.a lib/core.a lib/ntl.a -lgmp -o a.out</div>
-</div><!-- fragment --><h1><a class="anchor" id="quickstart"></a>
-Quick Start Guide</h1>
-<p >Here's a simple example demonstrating the basic usage of the KZG commitment library:</p>
-<h2><a class="anchor" id="initialization"></a>
-1. Initialize the Library</h2>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;kzg.h&gt;</span></div>
-<div class="line"> </div>
-<div class="line"><span class="keywordtype">int</span> main() {</div>
-<div class="line">    <span class="comment">// Initialize the library (must be called first)</span></div>
-<div class="line">    <a class="code hl_function" href="namespacekzg.html#a58c0bc4816471b0cd52ce4f44db6a0e3">kzg::init</a>();</div>
-<div class="line">    </div>
-<div class="line">    <span class="comment">// Create a trusted setup with 128 powers</span></div>
-<div class="line">    <a class="code hl_class" href="classkzg_1_1trusted__setup.html">kzg::trusted_setup</a> <a class="code hl_namespace" href="namespacekzg.html">kzg</a>(128);</div>
-<div class="ttc" id="aclasskzg_1_1trusted__setup_html"><div class="ttname"><a href="classkzg_1_1trusted__setup.html">kzg::trusted_setup</a></div><div class="ttdef"><b>Definition:</b> kzg.h:181</div></div>
-<div class="ttc" id="anamespacekzg_html_a58c0bc4816471b0cd52ce4f44db6a0e3"><div class="ttname"><a href="namespacekzg.html#a58c0bc4816471b0cd52ce4f44db6a0e3">kzg::init</a></div><div class="ttdeci">void init()</div><div class="ttdoc">Initialize the library.</div><div class="ttdef"><b>Definition:</b> trusted_setup.cpp:15</div></div>
-</div><!-- fragment --><h2><a class="anchor" id="commitment"></a>
-2. Create a Commitment</h2>
-<div class="fragment"><div class="line"><span class="comment">// Create data and convert to polynomial</span></div>
-<div class="line"><span class="keywordtype">string</span> data = <span class="stringliteral">&quot;hello there my name is bob&quot;</span>;</div>
-<div class="line"><a class="code hl_class" href="classkzg_1_1blob.html">kzg::blob</a> blob = <a class="code hl_function" href="classkzg_1_1blob.html#a4daa5938dfc52dc07c392ef64dcde2a9">kzg::blob::from_string</a>(data);</div>
-<div class="line"><a class="code hl_class" href="classkzg_1_1poly.html">kzg::poly</a> poly = <a class="code hl_function" href="classkzg_1_1poly.html#a01c60a35ee025ed7143b6afdee7d2049">kzg::poly::from_blob</a>(blob);</div>
-<div class="line"> </div>
-<div class="line"><span class="comment">// Create commitment to the polynomial</span></div>
-<div class="line"><a class="code hl_class" href="classkzg_1_1commit.html">kzg::commit</a> commit = <a class="code hl_namespace" href="namespacekzg.html">kzg</a>.create_commit(poly);</div>
-<div class="line"> </div>
-<div class="line"><span class="comment">// Verify the commitment</span></div>
-<div class="line"><span class="keywordflow">if</span> (<a class="code hl_namespace" href="namespacekzg.html">kzg</a>.verify_commit(commit, poly)) {</div>
-<div class="line">    cout &lt;&lt; <span class="stringliteral">&quot;Commitment verified successfully!&quot;</span> &lt;&lt; endl;</div>
-<div class="line">}</div>
-<div class="ttc" id="aclasskzg_1_1blob_html"><div class="ttname"><a href="classkzg_1_1blob.html">kzg::blob</a></div><div class="ttdef"><b>Definition:</b> kzg.h:40</div></div>
-<div class="ttc" id="aclasskzg_1_1blob_html_a4daa5938dfc52dc07c392ef64dcde2a9"><div class="ttname"><a href="classkzg_1_1blob.html#a4daa5938dfc52dc07c392ef64dcde2a9">kzg::blob::from_string</a></div><div class="ttdeci">static blob from_string(string s)</div><div class="ttdoc">Generate a vector of evaluation points encoding a string.</div><div class="ttdef"><b>Definition:</b> blob.cpp:3</div></div>
-<div class="ttc" id="aclasskzg_1_1commit_html"><div class="ttname"><a href="classkzg_1_1commit.html">kzg::commit</a></div><div class="ttdef"><b>Definition:</b> kzg.h:126</div></div>
-<div class="ttc" id="aclasskzg_1_1poly_html"><div class="ttname"><a href="classkzg_1_1poly.html">kzg::poly</a></div><div class="ttdef"><b>Definition:</b> kzg.h:88</div></div>
-<div class="ttc" id="aclasskzg_1_1poly_html_a01c60a35ee025ed7143b6afdee7d2049"><div class="ttname"><a href="classkzg_1_1poly.html#a01c60a35ee025ed7143b6afdee7d2049">kzg::poly::from_blob</a></div><div class="ttdeci">static poly from_blob(blob blob)</div><div class="ttdoc">Constructs a polynomial fitting the evaluation points in a blob.</div><div class="ttdef"><b>Definition:</b> poly.cpp:4</div></div>
-</div><!-- fragment --><h2><a class="anchor" id="proofs"></a>
-3. Generate and Verify Proofs</h2>
-<div class="fragment"><div class="line">    <span class="comment">// Generate a proof that the polynomial matches the </span></div>
-<div class="line">    <span class="comment">// evaluation points for &quot;hello&quot; at the beginning of the string.</span></div>
-<div class="line">    <a class="code hl_class" href="classkzg_1_1blob.html">kzg::blob</a> verify = <a class="code hl_function" href="classkzg_1_1blob.html#a4daa5938dfc52dc07c392ef64dcde2a9">kzg::blob::from_string</a>(<span class="stringliteral">&quot;hello&quot;</span>, 0);</div>
-<div class="line">    </div>
-<div class="line">    <span class="comment">// Verify the proof</span></div>
-<div class="line">    <span class="keywordflow">if</span> (<a class="code hl_namespace" href="namespacekzg.html">kzg</a>.verify_proof(commit, hello_proof, verify)) {</div>
-<div class="line">        cout &lt;&lt; <span class="stringliteral">&quot;Proof verified successfully!&quot;</span> &lt;&lt; endl;</div>
-<div class="line">    }</div>
-<div class="line">    </div>
-<div class="line">    <span class="keywordflow">return</span> 0;</div>
-<div class="line">}</div>
-</div><!-- fragment --><h1><a class="anchor" id="api_reference"></a>
-API Reference</h1>
-<h2><a class="anchor" id="key_functions"></a>
-Key Functions</h2>
-<ul>
-<li><a class="el" href="namespacekzg.html#a58c0bc4816471b0cd52ce4f44db6a0e3" title="Initialize the library.">kzg::init()</a> - Initialize the library (must be called first)</li>
-<li><a class="el" href="classkzg_1_1trusted__setup.html#a65f96b8e903fa781f8409292ddc569b9" title="Creates a KZG commitment for a given polynomial.">kzg::trusted_setup::create_commit()</a> - Create a commitment to a polynomial</li>
-<li><a class="el" href="classkzg_1_1trusted__setup.html#a090585536b780875848d309d1654c28f" title="Verifies that a commitment matches a given polynomial.">kzg::trusted_setup::verify_commit()</a> - Verify a commitment</li>
-<li><a class="el" href="classkzg_1_1trusted__setup.html#aa331bdba9acc9013f0e616ee8665b2bd" title="Creates a KZG proof for a specific byte range of data.">kzg::trusted_setup::create_proof()</a> - Generate an evaluation proof</li>
-<li><a class="el" href="classkzg_1_1trusted__setup.html#a8f48dd7a9053701f6c5e74e664a43b05" title="Verifies a KZG proof against a commitment and expected data.">kzg::trusted_setup::verify_proof()</a> - Verify an evaluation proof</li>
-</ul>
-<h2><a class="anchor" id="main_classes"></a>
-Classes</h2>
-<ul>
-<li><a class="el" href="classkzg_1_1trusted__setup.html">kzg::trusted_setup</a> - Manages the trusted setup and commitment/proof operations</li>
-<li><a class="el" href="classkzg_1_1blob.html">kzg::blob</a> - Represents raw data</li>
-<li><a class="el" href="classkzg_1_1poly.html">kzg::poly</a> - Represents polynomials</li>
-<li><a class="el" href="classkzg_1_1commit.html">kzg::commit</a> - Represents polynomial commitments</li>
-<li><a class="el" href="classkzg_1_1proof.html">kzg::proof</a> - Represents evaluation proofs</li>
-</ul>
-<h1><a class="anchor" id="example"></a>
-Example</h1>
-<p >For a more detailed example, see cpp/example/example.cpp. </p>
-</div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
