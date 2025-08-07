@@ -20,7 +20,7 @@ void kzg::init() {
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
   if (num_coeff < 2) {
-    throw invalid_argument("num_coeff must be greater than 1.");
+    throw invalid_argument("num_coeff must be at least 2");
   }
 
   BIG BIG_s;
@@ -79,7 +79,7 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
   
   std::ifstream file(filename, std::ios::in | std::ios::binary);
   if (!file.is_open())
-    throw logic_error("could not open trusted setup file");
+    throw runtime_error("could not open trusted setup file");
   
   uint64_t num_coeffs;
   file.read(reinterpret_cast<char*>(&num_coeffs), sizeof(num_coeffs));
@@ -98,7 +98,7 @@ kzg::trusted_setup::trusted_setup(const std::string& filename) {
     if (ECP_fromOctet(&point, &oct)) {
       _G1.push_back(point);
     } else {
-      throw logic_error("bad trusted setup file");
+      throw runtime_error("bad trusted setup file");
     }
   }
   
@@ -136,7 +136,7 @@ void kzg::trusted_setup::generate_elements_range(int start, int end, const std::
 
 kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
   if (deg(poly.get_poly()) + 1 >= _G1.size())
-    throw out_of_range("polynomial degree cannot be greater than or one less than setup size");
+    throw invalid_argument("polynomial degree be at most one less than the setup size (num_coeffs)");
   
   return kzg::commit(polyeval_G1(poly.get_poly()));
 }
@@ -202,7 +202,7 @@ ECP2 kzg::trusted_setup::polyeval_G2(const ZZ_pX& P) {
 
 kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offset, int byte_length, int chunk_size) {
   if (chunk_size > MAX_CHUNK_BYTES)
-    throw invalid_argument("chunk_size must be lower than MAX_CHUNK_BYTES.");
+    throw invalid_argument("chunk_size must at most MAX_CHUNK_BYTES.");
   else if (byte_offset % chunk_size != 0)
     throw invalid_argument("byte_offset is not a multiple of chunk_size.");
   else if (byte_length % chunk_size != 0)
