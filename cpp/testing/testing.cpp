@@ -164,35 +164,35 @@ void poly_degree_10_test() {
 }
 
 void high_poly_degree_test() {
-  kzg::trusted_setup kzg(150);
-  string data = "fa37JncCHryDsbzayy4cBWDxS22JjzhMaiRrV41mtzxlYvKWrO72tK0LK0e1zLOZ2nOXpPIhMFSv8kP07U20o0J90xA0GWXIIwo7J4ogHFZQxwQ2RQ0DRJKRETPVzxlFrXL8b7mtKLHIGhIh5JuWcF";
+  kzg::trusted_setup kzg(500);
+  string data = random_string(500);
   kzg::blob blob = kzg::blob::from_string(data);
   kzg::poly poly = kzg::poly::from_blob(blob);
 
   bool exception = false;
   try { kzg.create_commit(poly); }
   catch (...) { exception = true; }
-  check_test(exception, "149 degree polynomial, 150 character commit is invalid");
+  check_test(exception, "499 degree polynomial, 500 character commit is invalid");
 
-  data = "wrgJKdE3t5bECALy3eKIwYxEF3V7Z8KTx0nFe1IX5tjH22F5gXOa5LnIMIQuOiNJj8YL8rqDiZSkZfoEDAmGTXXqqvkCd5WKE2fMtVXa2zKae6opGY4i6bYuUG67LaSXd5tUbO4bNPB0TxnkWrSaQ";
+  data = random_string(499);
   blob = kzg::blob::from_string(data);
   poly = kzg::poly::from_blob(blob);
   kzg::commit commit = kzg.create_commit(poly);
-  check_test(kzg.verify_commit(commit, poly), "149 degree polynomial, commit verification");
+  check_test(kzg.verify_commit(commit, poly), "499 degree polynomial, commit verification");
   
-  kzg::proof proof = kzg.create_proof(poly, 49, 57);
-  string substring = data.substr(49, 57);
-  kzg::blob verify = kzg::blob::from_string(substring, 49);
-  check_test(kzg.verify_proof(commit, proof, verify), "149 degree polynomial, proof verification");
+  kzg::proof proof = kzg.create_proof(poly, 250, 150);
+  string substring = data.substr(250, 150);
+  kzg::blob verify = kzg::blob::from_string(substring, 250);
+  check_test(kzg.verify_proof(commit, proof, verify), "499 degree polynomial, proof verification");
 
   kzg::blob refute1 = kzg::blob::from_string(substring, 50);
   kzg::blob refute2 = kzg::blob::from_string(data.substr(49, 56), 30);
-  kzg::blob refute3 = kzg::blob::from_string("a", 200);
-  kzg::blob refute4 = kzg::blob::from_string(random_string(200), 3);
-  check_test(!kzg.verify_proof(commit, proof, refute1), "149 degree polynomial, proof refutation 1");
-  check_test(!kzg.verify_proof(commit, proof, refute2), "149 degree polynomial, proof refutation 2");
-  check_test(!kzg.verify_proof(commit, proof, refute3), "149 degree polynomial, proof refutation 3");
-  check_test(!kzg.verify_proof(commit, proof, refute4), "149 degree polynomial, proof refutation 4");
+  kzg::blob refute3 = kzg::blob::from_string("a", 900);
+  kzg::blob refute4 = kzg::blob::from_string(random_string(2000), 3);
+  check_test(!kzg.verify_proof(commit, proof, refute1), "499 degree polynomial, proof refutation 1");
+  check_test(!kzg.verify_proof(commit, proof, refute2), "449 degree polynomial, proof refutation 2");
+  check_test(!kzg.verify_proof(commit, proof, refute3), "449 degree polynomial, proof refutation 3");
+  check_test(!kzg.verify_proof(commit, proof, refute4), "449 degree polynomial, proof refutation 4");
 }
 
 void chunking_test() {
