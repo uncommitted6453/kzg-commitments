@@ -19,6 +19,7 @@ void invalid_setup_test();
 void poly_empty_test();
 void poly_degree_1_test();
 void poly_degree_10_test();
+void high_poly_degree_test();
 void chunking_test();
 void chunking_invalid_args_test();
 void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute);
@@ -27,6 +28,7 @@ void generate_expected_test_data(
     vector<pair<int, int>>& to_verify,
     vector<tuple<int, int, string>>& to_refute,
     int length,
+    int num_coeff,
     const string& data);
 
 int main() {
@@ -34,11 +36,12 @@ int main() {
   empty_proof_test();
   empty_verify_test();
   invalid_setup_test();
+  high_poly_degree_test();
   poly_degree_1_test();
   poly_degree_10_test();
   chunking_test();
   chunking_invalid_args_test();
-  random_test(10, 15, 1);
+  random_test(10, 140, 1);
 }
 
 void example_test() {
@@ -60,7 +63,7 @@ void random_test(int length, int num_coeff, int runs) {
     string data = random_string(length);
     vector<pair<int, int>> to_verify;
     vector<tuple<int, int, string>> to_refute;
-    generate_expected_test_data(to_verify, to_refute, length, data);
+    generate_expected_test_data(to_verify, to_refute, length, num_coeff, data);
     general_test(num_coeff, data, to_verify, to_refute);
   }
 }
@@ -86,7 +89,7 @@ void empty_verify_test() {
   bool exception = false;
   try { kzg.verify_proof(commit, empty_proof, refute); }
   catch(...) { exception = true; }
-  check_test(exception, "empty verifification is invalid");
+  check_test(exception, "empty verification is invalid");
 }
 
 void invalid_setup_test() {
@@ -123,15 +126,9 @@ void poly_degree_1_test() {
   check_test(exception, "1 degree polynomial, 2 character commit is invalid");
   
   kzg::blob refute1 = kzg::blob::from_string("k", 0);
-  kzg::blob refute2 = kzg::blob::from_string("j", 0);
+  kzg::blob refute2 = kzg::blob::from_string("jj", 2); // This should not throw.
   check_test(!kzg.verify_proof(commit, proof, refute1), "1 degree polynomial, proof refutation 1");
   check_test(!kzg.verify_proof(commit, proof, refute2), "1 degree polynomial, proof refutation 2");
-  
-  exception = false;
-  kzg::blob invalid = kzg::blob::from_string("K ", 0);
-  try { kzg.verify_proof(commit, proof, invalid); }
-  catch (...) { exception = true; }
-  check_test(exception, "1 degree polynomial, 2 character proof is invalid");
 }
 
 void poly_degree_10_test() {
@@ -157,9 +154,43 @@ void poly_degree_10_test() {
   check_test(kzg.verify_proof(commit, proof, verify), "10 degree polynomial, proof verification");
 
   kzg::blob refute1 = kzg::blob::from_string("CDEF", 0);
-  kzg::blob refute2 = kzg::blob::from_string("CD", 0);
+  kzg::blob refute2 = kzg::blob::from_string("CD", 12);
+  kzg::blob refute3 = kzg::blob::from_string("BHSDJCSHJDVBZ", 0);
   check_test(!kzg.verify_proof(commit, proof, refute1), "10 degree polynomial, proof refutation 1");
   check_test(!kzg.verify_proof(commit, proof, refute2), "10 degree polynomial, proof refutation 2");
+  check_test(!kzg.verify_proof(commit, proof, refute3), "10 degree polynomial, proof refutation 3");
+}
+
+void high_poly_degree_test() {
+  kzg::trusted_setup kzg(150);
+  string data = "fa37JncCHryDsbzayy4cBWDxS22JjzhMaiRrV41mtzxlYvKWrO72tK0LK0e1zLOZ2nOXpPIhMFSv8kP07U20o0J90xA0GWXIIwo7J4ogHFZQxwQ2RQ0DRJKRETPVzxlFrXL8b7mtKLHIGhIh5JuWcF";
+  kzg::blob blob = kzg::blob::from_string(data);
+  kzg::poly poly = kzg::poly::from_blob(blob);
+
+  bool exception = false;
+  try { kzg.create_commit(poly); }
+  catch (...) { exception = true; }
+  check_test(exception, "149 degree polynomial, 150 character commit is invalid");
+
+  data = "wrgJKdE3t5bECALy3eKIwYxEF3V7Z8KTx0nFe1IX5tjH22F5gXOa5LnIMIQuOiNJj8YL8rqDiZSkZfoEDAmGTXXqqvkCd5WKE2fMtVXa2zKae6opGY4i6bYuUG67LaSXd5tUbO4bNPB0TxnkWrSaQ";
+  blob = kzg::blob::from_string(data);
+  poly = kzg::poly::from_blob(blob);
+  kzg::commit commit = kzg.create_commit(poly);
+  check_test(kzg.verify_commit(commit, poly), "149 degree polynomial, commit verification");
+  
+  kzg::proof proof = kzg.create_proof(poly, 49, 57);
+  string substring = data.substr(49, 57);
+  kzg::blob verify = kzg::blob::from_string(substring, 49);
+  check_test(kzg.verify_proof(commit, proof, verify), "149 degree polynomial, proof verification");
+
+  kzg::blob refute1 = kzg::blob::from_string(substring, 50);
+  kzg::blob refute2 = kzg::blob::from_string(data.substr(49, 56), 30);
+  kzg::blob refute3 = kzg::blob::from_string("a", 200);
+  kzg::blob refute4 = kzg::blob::from_string(random_string(200), 3);
+  check_test(!kzg.verify_proof(commit, proof, refute1), "149 degree polynomial, proof refutation 1");
+  check_test(!kzg.verify_proof(commit, proof, refute2), "149 degree polynomial, proof refutation 2");
+  check_test(!kzg.verify_proof(commit, proof, refute3), "149 degree polynomial, proof refutation 3");
+  check_test(!kzg.verify_proof(commit, proof, refute4), "149 degree polynomial, proof refutation 4");
 }
 
 void chunking_test() {
@@ -243,9 +274,10 @@ void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, 
   }
 
   for (auto s : to_verify) {
-    kzg::proof s_proof = kzg.create_proof(poly, s.first, s.second); // SEG FAULT when s.second == len(data) and s.first == 0.
+    kzg::proof s_proof = kzg.create_proof(poly, s.first, s.second);
     string substring = data.substr(s.first, s.second);
     kzg::blob verify = kzg::blob::from_string(substring, s.first);
+    // cout << "Checking (" << s.first << ", " << s.second << "): Message is " << data << " and we are proving " << substring  << endl;
     if (kzg.verify_proof(commit, s_proof, verify)) {
       // cout << "Verified (" << s.first << ", " << s.second << "): Message is " << data << " and we are proving " << substring  << endl;
     } else {
@@ -257,10 +289,11 @@ void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, 
   for (auto s : to_refute) {
     kzg::proof s_proof = kzg.create_proof(poly, get<0>(s), get<1>(s));
     kzg::blob refute = kzg::blob::from_string(get<2>(s), get<0>(s));
+    // cout << "Checking (" << get<0>(s) << ", " << get<1>(s) << "): Message is " << data << " and we are refuting " << get<2>(s)  << endl;
     if (!kzg.verify_proof(commit, s_proof, refute)) { // This is seg faulting with the strings to refute have 0 length.
-      // cout << "Refuted (" << get<0>(s) << ", " << get<1>(s) << "): Message is " << data << " and we are refuting " << get<2>(s)  << endl;
+      // cout << "Refuted  (" << get<0>(s) << ", " << get<1>(s) << "): Message is " << data << " and we are refuting " << get<2>(s)  << endl;
     } else {
-      cout << "FAILED  (" << get<0>(s) << ", " << get<1>(s) << "): Message is " << data << " and we are refuting " << get<2>(s)  << endl;
+      cout << "FAILED   (" << get<0>(s) << ", " << get<1>(s) << "): Message is " << data << " and we are refuting " << get<2>(s)  << endl;
     }
   }
 }
@@ -288,18 +321,17 @@ void generate_expected_test_data(
   vector<pair<int, int>>& to_verify,
   vector<tuple<int, int, string>>& to_refute,
   int length,
+  int num_coeff,
   const string& data
 ) {
-  // Should go up to length instead of length - 1,
-  // but create_proof seg faults when j == 0, and k == length.
-  for (int j = 0; j < length - 1; ++j) {
-    for (int k = 1; j + k < length; ++k) {
+  for (int j = 0; j < length; ++j) {
+    for (int k = 1; j + k <= length; ++k) {
       to_verify.push_back(make_pair(j, k));
 
       string substring = data.substr(j, k);
-      string str_to_refute = random_string((rand() % (length * 2)) + 1); // TODO: str length of 0 not working
+      string str_to_refute = random_string((rand() % (num_coeff - 1)) + 1);
       while (substring == str_to_refute) {
-        str_to_refute = random_string((rand() % (length * 2)) + 1);
+        str_to_refute = random_string((rand() % (num_coeff - 1)) + 1);
       }
 
       to_refute.push_back(make_tuple(j, k, str_to_refute));
@@ -307,7 +339,12 @@ void generate_expected_test_data(
   }
 }
 
+// from https://gist.github.com/Kielx/2917687bc30f567d45e15a4577772b02
+#define RESET   "\033[0m"
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+
 void check_test(bool status, string test_name) {
-  if (status) cout << "PASSED [" << test_name << "]" << endl;
-  else cout << "FAILED [" << test_name << "]" << endl;
+  if (status) cout << GREEN << "PASSED" << RESET << " [" << test_name << "]" << endl;
+  else cout << RED << "FAILED" << RESET << " [" << test_name << "]" << endl;
 }
