@@ -18,20 +18,11 @@ void kzg::init() {
   kzg::CURVE_ORDER_BYTES = NumBytes(ZZ_curve_order);
 }
 
-kzg::trusted_setup::trusted_setup(int num_coeff, int num_secret_bytes) {
+kzg::trusted_setup::trusted_setup(int num_coeff) {
   BIG BIG_s;
   generate_random_BIG(BIG_s);
-
-  if (num_secret_bytes > 0) {
-    char secret_bytes[MODBYTES_CURVE];
-    BIG_toBytes(secret_bytes, BIG_s);
-    for (int i = num_secret_bytes; i < MODBYTES_CURVE; i++)
-      secret_bytes[i] = 0;
-    BIG_fromBytesLen(BIG_s, secret_bytes, MODBYTES_CURVE);
-  }
-
   ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
-  
+
   _G1.resize(num_coeff);
   _G2.resize(num_coeff);
 
