@@ -16,9 +16,13 @@ void kzg::init() {
   ZZ ZZ_curve_order = ZZ_from_BIG(CURVE_Order);
   ZZ_p::init(ZZ_curve_order);
   kzg::CURVE_ORDER_BYTES = NumBytes(ZZ_curve_order);
-}
+}  
 
 kzg::trusted_setup::trusted_setup(int num_coeff) {
+  if (num_coeff < 2) {
+    throw invalid_argument("num_coeff must be greater than 1.");
+  }
+
   BIG BIG_s;
   generate_random_BIG(BIG_s);
   ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
@@ -131,8 +135,8 @@ void kzg::trusted_setup::generate_elements_range(int start, int end, const std::
 }
 
 kzg::commit kzg::trusted_setup::create_commit(const kzg::poly& poly) {
-  if (deg(poly.get_poly()) >= _G1.size())
-    throw out_of_range("polynomial degree cannot be greater than setup size");
+  if (deg(poly.get_poly()) + 1 >= _G1.size())
+    throw out_of_range("polynomial degree cannot be greater than or one less than setup size");
   
   return kzg::commit(polyeval_G1(poly.get_poly()));
 }
@@ -208,6 +212,9 @@ kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int byte_offs
 }
 
 kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int chunk_offset, int chunk_length) {
+  if (chunk_length < 1)
+      throw invalid_argument("chunk_length must be 1 or greater");
+
   const ZZ_pX& P = poly.get_poly();
   
   vector<pair<ZZ_p, ZZ_p>> points;
@@ -222,6 +229,11 @@ kzg::proof kzg::trusted_setup::create_proof(const kzg::poly& poly, int chunk_off
 
 bool kzg::trusted_setup::verify_proof(kzg::commit& commit, kzg::proof& proof, kzg::blob& expected_data) {
   vector<pair<ZZ_p, ZZ_p>>& points = expected_data.get_data();
+
+  if (points.size() < 1)
+    throw invalid_argument("expected_data size must be 1 or greater");
+  else if (points.size() >= _G1.size())
+    return false;
   
   ZZ_pX I, Z;
   linear_roots_and_polyfit(I, Z, points);
