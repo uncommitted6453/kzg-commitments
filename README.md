@@ -34,28 +34,55 @@ Our results were as follows:
 ```
 bls12381:
 
-Degree  128: Setup:  42087μs | Commit: 23241μs | Verify: 58953μs | ✓
-Degree  256: Setup:  67752μs | Commit: 17842μs | Verify: 54024μs | ✓
-Degree  512: Setup: 133184μs | Commit: 22407μs | Verify: 79773μs | ✓
-Degree 1024: Setup: 267437μs | Commit: 17497μs | Verify: 53364μs | ✓
-Degree 2048: Setup: 527026μs | Commit: 24516μs | Verify: 53314μs | ✓
-Degree 4096: Setup: 1006543μs | Commit: 17491μs | Verify: 52351μs | ✓
+=== Benchmarking Trusted Setup Max Degree with degree=63 ===
+Max Degree:  128 | Degree:   63 | Setup:   42.609ms | Commit:  29.532ms | Proof:   9.773ms | Verify:  73.119ms | ✓
+Max Degree:  256 | Degree:   63 | Setup:   79.061ms | Commit:  19.870ms | Proof:  10.300ms | Verify:  66.339ms | ✓
+Max Degree:  512 | Degree:   63 | Setup:  152.746ms | Commit:  20.967ms | Proof:  10.026ms | Verify:  58.715ms | ✓
+Max Degree: 1024 | Degree:   63 | Setup:  287.988ms | Commit:  18.783ms | Proof:   9.965ms | Verify:  60.944ms | ✓
+Max Degree: 2048 | Degree:   63 | Setup:  544.456ms | Commit:  18.265ms | Proof:   9.632ms | Verify:  63.450ms | ✓
+Max Degree: 4096 | Degree:   63 | Setup: 1064.539ms | Commit:  18.745ms | Proof:  10.520ms | Verify:  55.507ms | ✓
+
+=== Benchmarking Polynomial Degree with Max Degree=128 ===
+Max Degree:  128 | Degree:  10 | Setup:   37.529ms | Commit:   3.270ms | Proof:   1.733ms | Verify:  15.578ms | ✓
+Max Degree:  128 | Degree:  12 | Setup:   39.445ms | Commit:   3.884ms | Proof:   1.997ms | Verify:  16.520ms | ✓
+Max Degree:  128 | Degree:  14 | Setup:   40.112ms | Commit:   4.448ms | Proof:   2.759ms | Verify:  19.257ms | ✓
+Max Degree:  128 | Degree:  16 | Setup:   37.554ms | Commit:   5.018ms | Proof:   2.566ms | Verify:  20.008ms | ✓
+Max Degree:  128 | Degree:  18 | Setup:   39.387ms | Commit:   5.573ms | Proof:   2.945ms | Verify:  22.771ms | ✓
+Max Degree:  128 | Degree:  20 | Setup:   36.344ms | Commit:   6.584ms | Proof:   3.207ms | Verify:  23.105ms | ✓
 
 bn158:
 
-Degree  128: Setup:  16672μs | Commit:  8324μs | Verify: 12368μs | ✓
-Degree  256: Setup:  31686μs | Commit:  5524μs | Verify: 12632μs | ✓
-Degree  512: Setup:  63883μs | Commit:  5164μs | Verify: 12082μs | ✓
-Degree 1024: Setup: 123140μs | Commit:  5190μs | Verify: 11693μs | ✓
-Degree 2048: Setup: 345944μs | Commit: 18715μs | Verify: 13912μs | ✓
-Degree 4096: Setup: 501990μs | Commit:  5050μs | Verify: 10730μs | ✓
+=== Benchmarking Trusted Setup Max Degree with degree=63 ===
+Max Degree:  128 | Degree:   63 | Setup:   22.337ms | Commit:   6.495ms | Proof:   3.410ms | Verify:  14.101ms | ✓
+Max Degree:  256 | Degree:   63 | Setup:   38.914ms | Commit:   5.539ms | Proof:   3.852ms | Verify:  15.468ms | ✓
+Max Degree:  512 | Degree:   63 | Setup:  122.122ms | Commit:  28.256ms | Proof:  16.930ms | Verify:  24.721ms | ✓
+Max Degree: 1024 | Degree:   63 | Setup:  140.967ms | Commit:   5.810ms | Proof:   3.505ms | Verify:  12.115ms | ✓
+Max Degree: 2048 | Degree:   63 | Setup:  249.029ms | Commit:   5.681ms | Proof:   3.810ms | Verify:  11.386ms | ✓
+Max Degree: 4096 | Degree:   63 | Setup:  488.010ms | Commit:   5.375ms | Proof:   3.318ms | Verify:  17.117ms | ✓
+
+=== Benchmarking Polynomial Degree with Max Degree=128 ===
+Max Degree:  128 | Degree:  10 | Setup:   15.714ms | Commit:   0.857ms | Proof:   0.640ms | Verify:   2.998ms | ✓
+Max Degree:  128 | Degree:  12 | Setup:   16.792ms | Commit:   1.861ms | Proof:   1.184ms | Verify:   5.787ms | ✓
+Max Degree:  128 | Degree:  14 | Setup:   16.956ms | Commit:   1.229ms | Proof:   0.837ms | Verify:   6.622ms | ✓
+Max Degree:  128 | Degree:  16 | Setup:   17.270ms | Commit:   1.373ms | Proof:   0.834ms | Verify:   3.585ms | ✓
+Max Degree:  128 | Degree:  18 | Setup:   17.162ms | Commit:   1.597ms | Proof:   1.029ms | Verify:   3.855ms | ✓
+Max Degree:  128 | Degree:  20 | Setup:   16.579ms | Commit:   2.329ms | Proof:   1.047ms | Verify:   4.638ms | ✓
 
 bn254:
 
-Degree  128: Setup:  33793μs | Commit: 12492μs | Verify: 25598μs | ✓
-Degree  256: Setup:  63233μs | Commit: 12621μs | Verify: 22524μs | ✓
-Degree  512: Setup: 130900μs | Commit: 15559μs | Verify: 26902μs | ✓
-Degree 1024: Setup: 219164μs | Commit: 12562μs | Verify: 22778μs | ✓
-Degree 2048: Setup: 464625μs | Commit: 12637μs | Verify: 23251μs | ✓
-Degree 4096: Setup: 868927μs | Commit: 12556μs | Verify: 22705μs | ✓
+=== Benchmarking Trusted Setup Max Degree with degree=63 ===
+Max Degree:  128 | Degree:   63 | Setup:   49.847ms | Commit:  21.263ms | Proof:  13.238ms | Verify:  36.026ms | ✓
+Max Degree:  256 | Degree:   63 | Setup:   89.127ms | Commit:  17.687ms | Proof:  10.893ms | Verify:  25.884ms | ✓
+Max Degree:  512 | Degree:   63 | Setup:  149.628ms | Commit:  13.754ms | Proof:   7.404ms | Verify:  25.308ms | ✓
+Max Degree: 1024 | Degree:   63 | Setup:  276.698ms | Commit:  14.994ms | Proof:  15.513ms | Verify:  35.544ms | ✓
+Max Degree: 2048 | Degree:   63 | Setup:  659.569ms | Commit:  13.786ms | Proof:   7.275ms | Verify:  25.541ms | ✓
+Max Degree: 4096 | Degree:   63 | Setup: 1327.310ms | Commit:  20.603ms | Proof:   9.743ms | Verify:  33.519ms | ✓
+
+=== Benchmarking Polynomial Degree with Max Degree=128 ===
+Max Degree:  128 | Degree:  10 | Setup:   42.114ms | Commit:   3.641ms | Proof:   2.248ms | Verify:   5.979ms | ✓
+Max Degree:  128 | Degree:  12 | Setup:   36.769ms | Commit:   3.563ms | Proof:   1.527ms | Verify:   5.883ms | ✓
+Max Degree:  128 | Degree:  14 | Setup:   34.236ms | Commit:   3.924ms | Proof:   2.914ms | Verify:   6.866ms | ✓
+Max Degree:  128 | Degree:  16 | Setup:   33.216ms | Commit:   3.491ms | Proof:   2.105ms | Verify:   8.837ms | ✓
+Max Degree:  128 | Degree:  18 | Setup:   33.771ms | Commit:   3.770ms | Proof:   2.134ms | Verify:   7.453ms | ✓
+Max Degree:  128 | Degree:  20 | Setup:   32.438ms | Commit:   4.565ms | Proof:   3.212ms | Verify:  14.750ms | ✓
 ```
