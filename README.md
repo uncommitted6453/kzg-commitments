@@ -18,7 +18,7 @@ Run the following to build the library:
 
 ```sh
 git clone --recurse-submodules -j8 https://github.com/uncommitted6453/kzg-commitments.git
-cd kzg-commitments/cpp
+cd kzg-commitments
 make
 ```
 
@@ -66,14 +66,14 @@ verified: hello
 The tests will be run automatically upon building the program:
 
 ```sh
-cd kzg-commitments/cpp
+cd kzg-commitments
 make
 ```
 
 but you can also run the program manually after building with 
 
 ```sh
-cd kzg-commitments/cpp/testing
+cd kzg-commitments/testing
 ./testing
 ```
 
@@ -82,7 +82,6 @@ cd kzg-commitments/cpp/testing
 Run the benchmarks yourself by running the following commands:
 
 ```sh
-cd cpp
 ./benchmark_curves.sh
 ```
 

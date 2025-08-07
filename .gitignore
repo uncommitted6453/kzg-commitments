@@ -1,5 +1,11 @@
 docs
 benchmark_results
+kzg-bn158
+kzg-bn254
+kzg_public
+include
+obj
+lib
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
