@@ -192,7 +192,7 @@ void evaluate_polynomial_points(vector<pair<ZZ_p, ZZ_p>>& points, const ZZ_pX& p
       points.push_back({ ZZ_x, ZZ_y });
     }
   } else {
-    for (int i = offset; i <= offset + length; i++) {
+    for (int i = offset; i < offset + length; i++) {
       ZZ_p ZZ_x, ZZ_y;
       ZZ_x = i;
       ZZ_y = 0;
