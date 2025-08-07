@@ -23,13 +23,13 @@ benchmark/benchmark-bn254: benchmark/benchmark.cpp lib/kzg-bn254.a lib/core.a li
 benchmark/benchmark-bls12381: benchmark/benchmark.cpp lib/kzg-bls12381.a lib/core.a lib/ntl.a
 	g++ benchmark/benchmark.cpp -Iinclude lib/kzg-bls12381.a lib/core.a lib/ntl.a -lgmp -o $@
 
-lib/kzg-bn158.a: config_bn158 include/NTL/config.h lib/ntl.a $(KZG_OBJ) | lib
+lib/kzg-bn158.a: config_bn158 lib/ntl.a include/NTL/config.h $(KZG_OBJ) | lib
 	ar rvs $@ $(KZG_OBJ)
 
-lib/kzg-bn254.a: config_bn254 include/NTL/config.h lib/ntl.a $(KZG_OBJ) | lib
+lib/kzg-bn254.a: config_bn254 lib/ntl.a include/NTL/config.h $(KZG_OBJ) | lib
 	ar rvs $@ $(KZG_OBJ)
 
-lib/kzg-bls12381.a: config_bls12381 include/NTL/config.h lib/ntl.a $(KZG_OBJ) | lib
+lib/kzg-bls12381.a: config_bls12381 lib/ntl.a include/NTL/config.h $(KZG_OBJ) | lib
 	ar rvs $@ $(KZG_OBJ)
 
 obj/%.o: src/%.cpp include/kzg.h $(KZG_H) | obj
