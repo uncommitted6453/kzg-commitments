@@ -83,9 +83,9 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a97856a36959ce53d238cc273edca9b50"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classkzg_1_1trusted__setup.html#a97856a36959ce53d238cc273edca9b50">trusted_setup</a> (int num_coeff)</td></tr>
-<tr class="memdesc:a97856a36959ce53d238cc273edca9b50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Performs the trusted setup step of the KZG commitment scheme.  <a href="classkzg_1_1trusted__setup.html#a97856a36959ce53d238cc273edca9b50">More...</a><br /></td></tr>
-<tr class="separator:a97856a36959ce53d238cc273edca9b50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c0ac4a58f38809a78a28f5f7cafc22c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classkzg_1_1trusted__setup.html#a3c0ac4a58f38809a78a28f5f7cafc22c">trusted_setup</a> (int num_coeff, int num_secret_bytes=0)</td></tr>
+<tr class="memdesc:a3c0ac4a58f38809a78a28f5f7cafc22c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Performs the trusted setup step of the KZG commitment scheme.  <a href="classkzg_1_1trusted__setup.html#a3c0ac4a58f38809a78a28f5f7cafc22c">More...</a><br /></td></tr>
+<tr class="separator:a3c0ac4a58f38809a78a28f5f7cafc22c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8d070d6ba980422341fda6067d0472a9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classkzg_1_1trusted__setup.html#a8d070d6ba980422341fda6067d0472a9">trusted_setup</a> (const std::string &amp;filename)</td></tr>
 <tr class="memdesc:a8d070d6ba980422341fda6067d0472a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a trusted setup from a file exported with <a class="el" href="classkzg_1_1trusted__setup.html#ae1bf1dd6f13cd8ac73e6cc15d94672c1" title="Exports the trusted setup to a binary file.">kzg::trusted_setup::export_setup</a>.  <a href="classkzg_1_1trusted__setup.html#a8d070d6ba980422341fda6067d0472a9">More...</a><br /></td></tr>
 <tr class="separator:a8d070d6ba980422341fda6067d0472a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -109,8 +109,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ae1bf1dd6f13cd8ac73e6cc15d94672c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a97856a36959ce53d238cc273edca9b50" name="a97856a36959ce53d238cc273edca9b50"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a97856a36959ce53d238cc273edca9b50">&#9670;&#160;</a></span>trusted_setup() <span class="overload">[1/2]</span></h2>
+<a id="a3c0ac4a58f38809a78a28f5f7cafc22c" name="a3c0ac4a58f38809a78a28f5f7cafc22c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c0ac4a58f38809a78a28f5f7cafc22c">&#9670;&#160;</a></span>trusted_setup() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -119,8 +119,18 @@ Public Member Functions</h2></td></tr>
           <td class="memname">kzg::trusted_setup::trusted_setup </td>
           <td>(</td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>num_coeff</em></td><td>)</td>
+          <td class="paramname"><em>num_coeff</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>num_secret_bytes</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -130,6 +140,7 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">num_coeff</td><td>The number of group elements to generate. The maximum value for num_coeff is MAX_CHUNK_BYTES. </td></tr>
+    <tr><td class="paramname">num_secret_bytes</td><td>The number of bytes the secret is bounded by. The maximum is MODBYTES_CURVE. </td></tr>
   </table>
   </dd>
 </dl>
