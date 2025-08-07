@@ -46,7 +46,11 @@ void benchmark_polynomial_max_degree(int max_degree)
   auto commit_duration = duration_cast<microseconds>(commit_end - commit_start);
   
   // Prepare verification data
+  auto proof_start = high_resolution_clock::now();
   kzg::proof proof = kzg.create_proof(poly, 0, rand_str1.length());
+  auto proof_end = high_resolution_clock::now();
+  auto proof_duration = duration_cast<microseconds>(proof_end - proof_start);
+
   kzg::blob verify_target = kzg::blob::from_string(rand_str1, 0);
   
   // Measure verification time
@@ -59,6 +63,7 @@ void benchmark_polynomial_max_degree(int max_degree)
        << " | Degree: " << std::setw(4) << 63
        << " | Setup: " << std::setw(6) << setup_duration.count() << "μs | "
        << "Commit: " << std::setw(5) << commit_duration.count() << "μs | "
+       << "Proof: " << std::setw(5) << proof_duration.count() << "μs | "
        << "Verify: " << std::setw(5) << verify_duration.count() << "μs | "
        << (verification_result ? "✓" : "✗") << endl;
 }
@@ -85,8 +90,12 @@ void benchmark_polynomial_degree(int degree)
   
   // Prepare verification data - use first half of the string for verification
   int verify_length = (degree + 1) / 2;
-  string verify_string = test_data.substr(0, verify_length);
+  auto proof_start = high_resolution_clock::now();
   kzg::proof proof = kzg.create_proof(poly, 0, verify_length);
+  auto proof_end = high_resolution_clock::now();
+  auto proof_duration = duration_cast<microseconds>(proof_end - proof_start);
+
+  string verify_string = test_data.substr(0, verify_length);
   kzg::blob verify_target = kzg::blob::from_string(verify_string, 0);
   
   // Measure verification time
@@ -99,6 +108,7 @@ void benchmark_polynomial_degree(int degree)
        << " | Degree: " << std::setw(3) << degree
        << " | Setup: " << std::setw(6) << setup_duration.count() << "μs | "
        << "Commit: " << std::setw(5) << commit_duration.count() << "μs | "
+       << "Proof: " << std::setw(5) << proof_duration.count() << "μs | "
        << "Verify: " << std::setw(5) << verify_duration.count() << "μs | "
        << (verification_result ? "✓" : "✗") << endl;
 }
