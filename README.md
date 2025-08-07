@@ -70,7 +70,7 @@ cd kzg-commitments/cpp
 make
 ```
 
-but you can also run the program manually with 
+but you can also run the program manually after building with 
 
 ```sh
 cd kzg-commitments/cpp/testing
