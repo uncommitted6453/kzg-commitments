@@ -12,7 +12,7 @@
 
 void check_test(bool status, string test_name);
 void example_test();
-void random_test(int length, int num_coeff, int runs);
+void random_test(int length, int num_coeff, int runs, bool to_serialize);
 void empty_proof_test();
 void empty_verify_test();
 void invalid_setup_test();
@@ -22,14 +22,15 @@ void poly_degree_10_test();
 void high_poly_degree_test();
 void chunking_test();
 void chunking_invalid_args_test();
-void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute);
+void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute, bool to_serialize);
 string random_string(const int len);
 void generate_expected_test_data(
-    vector<pair<int, int>>& to_verify,
-    vector<tuple<int, int, string>>& to_refute,
-    int length,
-    int num_coeff,
-    const string& data);
+  vector<pair<int, int>>& to_verify,
+  vector<tuple<int, int, string>>& to_refute,
+  int length,
+  int num_coeff,
+  const string& data
+);
 
 int main() {
   kzg::init();
@@ -41,7 +42,7 @@ int main() {
   poly_degree_10_test();
   chunking_test();
   chunking_invalid_args_test();
-  random_test(10, 140, 1);
+  random_test(9, 140, 1, true);
 }
 
 void example_test() {
@@ -54,17 +55,18 @@ void example_test() {
       { strlen("hello there my name is "), strlen("bob")}
     }, {
       { strlen("hello there my name is "), strlen("bob"), "alice" }
-    }
+    },
+    true
   );
 }
 
-void random_test(int length, int num_coeff, int runs) {
+void random_test(int length, int num_coeff, int runs, bool to_serialize) {
   for (int i = 0; i < runs; ++i) {
     string data = random_string(length);
     vector<pair<int, int>> to_verify;
     vector<tuple<int, int, string>> to_refute;
     generate_expected_test_data(to_verify, to_refute, length, num_coeff, data);
-    general_test(num_coeff, data, to_verify, to_refute);
+    general_test(num_coeff, data, to_verify, to_refute, to_serialize);
   }
 }
 
@@ -196,7 +198,7 @@ void high_poly_degree_test() {
 void chunking_test() {
   kzg::trusted_setup kzg(128);
 
-  unsigned char data[] = "123456789abcdef";
+  unsigned char data[] = "ysudYUGdghv675d";
 
   bool exception = false;
   try { kzg::blob::from_bytes(data, 0, sizeof(data), 3); }
@@ -209,7 +211,7 @@ void chunking_test() {
   check_test(kzg.verify_commit(commit, poly), "chunking, commit verification for blob1");
 
   kzg::proof proof = kzg.create_proof(poly, 3, 9, 1);
-  kzg::blob verify = kzg::blob::from_bytes((uint8_t*) "456789abc", 3, 9, 1);
+  kzg::blob verify = kzg::blob::from_bytes((uint8_t*) "dYUGdghv6", 3, 9, 1);
   check_test(kzg.verify_proof(commit, proof, verify), "chunking, proof verification for blob1");
 
   kzg::blob blob2 = kzg::blob::from_bytes(data, 0, sizeof(data), 2);
@@ -218,7 +220,7 @@ void chunking_test() {
   check_test(kzg.verify_commit(commit, poly), "chunking, commit verification for blob2");
   
   proof = kzg.create_proof(poly, 2, 10, 2);
-  verify = kzg::blob::from_bytes((uint8_t*) "3456789abc", 2, 10, 2);
+  verify = kzg::blob::from_bytes((uint8_t*) "udYUGdghv6", 2, 10, 2);
   check_test(kzg.verify_proof(commit, proof, verify), "chunking, proof verification for blob2");
 
   kzg::blob blob4 = kzg::blob::from_bytes(data, 0, sizeof(data), 4);
@@ -227,14 +229,14 @@ void chunking_test() {
   check_test(kzg.verify_commit(commit, poly), "chunking, commit verification for blob4");
   
   proof = kzg.create_proof(poly, 4, 8, 4);
-  verify = kzg::blob::from_bytes((uint8_t*) "56789abc", 4, 8, 4);
+  verify = kzg::blob::from_bytes((uint8_t*) "YUGdghv6", 4, 8, 4);
   check_test(kzg.verify_proof(commit, proof, verify), "chunking, proof verification for blob4");
 }
 
 void chunking_invalid_args_test() {
   kzg::trusted_setup kzg(128);
 
-  unsigned char data[] = "123456789abcdef";
+  unsigned char data[] = "ysudYUGdghv675d";
   kzg::blob blob1 = kzg::blob::from_bytes(data, 0, sizeof(data), 1);
 
   kzg::poly poly = kzg::poly::from_blob(blob1);
@@ -250,23 +252,24 @@ void chunking_invalid_args_test() {
   try { kzg.create_proof(poly, 2, 8, 4); }
   catch (...) { exception = true; }
   check_test(exception, "chunking invalid args, invalid byte offset");
-  
-  // TODO: test MAX_CHUNK_BYTES
-  // NOTE: you can technically evaluate the polynomial at any point
-  // the poly class doesn't save any data regarding blob, offset size etc. so this evaluation should be valid
-  // exception = false;
-  // try { kzg.create_proof(poly, 12, 12, 1); }
-  // catch (...) { exception = true; }
-  // check_test(exception, "chunking invalid args, bytes out of range of data");
 }
 
-void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute) {
+void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute, bool to_serialize) {
   bool success = true;
   kzg::trusted_setup kzg(num_coeff);
   
   kzg::blob blob = kzg::blob::from_string(data);
   kzg::poly poly = kzg::poly::from_blob(blob);
+  if (to_serialize) {
+    std::vector<uint8_t> poly_data = poly.serialize();
+    poly = kzg::poly::deserialize(poly_data);
+  }
   kzg::commit commit = kzg.create_commit(poly);
+  if (to_serialize) {
+    std::vector<uint8_t> commit_data = commit.serialize();
+    commit = kzg::commit::deserialize(commit_data);
+  }
+  
 
   if (!kzg.verify_commit(commit, poly)) {
     cout << "Failed to verify commit {data: " << data << ", num_coeff: " << num_coeff << "}" << endl;
@@ -275,6 +278,11 @@ void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, 
 
   for (auto s : to_verify) {
     kzg::proof s_proof = kzg.create_proof(poly, s.first, s.second);
+    if (to_serialize) {
+      std::vector<uint8_t> proof_data = s_proof.serialize();
+      s_proof = kzg::proof::deserialize(proof_data);
+    }
+
     string substring = data.substr(s.first, s.second);
     kzg::blob verify = kzg::blob::from_string(substring, s.first);
     // cout << "Checking (" << s.first << ", " << s.second << "): Message is " << data << " and we are proving " << substring  << endl;
