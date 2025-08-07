@@ -105,7 +105,10 @@ ECP deserialize_ECP(const std::vector<uint8_t>& bytes) {
   octet oct = {static_cast<int>(len), G1_OCTET_SIZE, buffer};
   ECP point;
   if (!ECP_fromOctet(&point, &oct)) {
-    std::cerr << "failed to deserialize ECP point" << std::endl;
+    // Assume ECP is infinity if it fails to deserialize
+    ECP inf;
+    ECP_inf(&inf);
+    return inf;
   }
   
   return point;
