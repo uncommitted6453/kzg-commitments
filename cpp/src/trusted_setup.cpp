@@ -21,8 +21,12 @@ void kzg::init() {
 kzg::trusted_setup::trusted_setup(int num_coeff) {
   BIG BIG_s;
   generate_random_BIG(BIG_s);
-  ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
 
+  for (int i = NUM_SECRET_BYTES; i < MODBYTES_CURVE; i++)
+    BIG_s[i] = 0;
+
+  ZZ_p s = conv<ZZ_p>(ZZ_from_BIG(BIG_s));
+  
   _G1.resize(num_coeff);
   _G2.resize(num_coeff);
 

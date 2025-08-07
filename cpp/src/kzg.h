@@ -9,6 +9,11 @@
 using namespace std;
 using namespace NTL;
 
+// Use total possible bytes
+#ifndef NUM_SECRET_BYTES
+  #define NUM_SECRET_BYTES MODBYTES_CURVE
+#endif
+
 /**
  * @namespace kzg
  * @brief KZG polynomial commitment scheme functions.
