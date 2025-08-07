@@ -24,8 +24,7 @@ string generateRandomString(int length)
   return random_string;
 }
 
-void benchmark_polynomial_degree(int max_degree)
-{
+void benchmark_polynomial_degree(int max_degree) {
   cout << "Degree " << std::setw(4) << max_degree << ": ";
   
   // Measure setup time
@@ -63,14 +62,29 @@ void benchmark_polynomial_degree(int max_degree)
        << (verification_result ? "✓" : "✗") << endl;
 }
 
+void benchmark_increasing_secret_bytes(int secret_bytes) {
+  
+  // Measure setup time
+  auto setup_start = high_resolution_clock::now();
+  kzg::trusted_setup kzg(256, secret_bytes);
+  auto setup_end = high_resolution_clock::now();
+  auto setup_duration = duration_cast<microseconds>(setup_end - setup_start);
+  cout << "Secret Bytes Setup" << std::setw(4) << secret_bytes << ": " << std::setw(6) << setup_duration.count() << "μs" << endl;
+}
+
 int main(int argc, char *argv[])
 {
   kzg::init();
   
-  // Test different polynomial degrees using a for loop
+  // Test different polynomial degrees
   for (int degree = 128; degree <= 4096; degree *= 2) {
     benchmark_polynomial_degree(degree);
   }
-  
+
+  // Test different number of secret bytes
+  for (int secret_bytes = 1; secret_bytes < MODBYTES_CURVE; secret_bytes += 4) {
+    benchmark_increasing_secret_bytes(secret_bytes);
+  }
+
   return 0;
 }

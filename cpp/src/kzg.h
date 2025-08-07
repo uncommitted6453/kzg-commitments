@@ -9,11 +9,6 @@
 using namespace std;
 using namespace NTL;
 
-// Use total possible bytes
-#ifndef NUM_SECRET_BYTES
-  #define NUM_SECRET_BYTES MODBYTES_CURVE
-#endif
-
 /**
  * @namespace kzg
  * @brief KZG polynomial commitment scheme functions.
@@ -202,8 +197,9 @@ public:
   * that can be committed with the setup. 
   * 
   * @param num_coeff The number of group elements to generate. The maximum value for num_coeff is MAX_CHUNK_BYTES.
+  * @param num_secret_bytes The number of bytes the secret is bounded by. The maximum is MODBYTES_CURVE.
   */
-  trusted_setup(int num_coeff);
+  trusted_setup(int num_coeff, int num_secret_bytes=0);
   
   /**
   * @brief Loads a trusted setup from a file exported with kzg::trusted_setup::export_setup.
