@@ -9,6 +9,8 @@
 #include <ctime>
 #include <unistd.h>
 #include <vector>
+#include <sstream>
+#include <fstream>
 
 void check_test(bool status, string test_name);
 void example_test();
@@ -23,6 +25,7 @@ void high_poly_degree_test();
 void chunking_test();
 void chunking_invalid_args_test();
 void general_test(int num_coeff, string data, vector<pair<int, int>> to_verify, vector<tuple<int, int, string>> to_refute, bool to_serialize);
+vector<uint8_t> from_hex(string s);
 string random_string(const int len);
 void generate_expected_test_data(
   vector<pair<int, int>>& to_verify,
@@ -31,6 +34,7 @@ void generate_expected_test_data(
   int num_coeff,
   const string& data
 );
+void eth_blob_test();
 
 int main() {
   kzg::init();
@@ -43,6 +47,58 @@ int main() {
   chunking_test();
   chunking_invalid_args_test();
   random_test(9, 140, 1, true);
+  eth_blob_test();
+}
+
+void eth_blob_test() {
+  kzg::trusted_setup kzg(5000);
+  
+  // commit and generate proof for blob from eth transaction
+  // transaction hash: 0x9e3de317d97616d3bd2e714e467a14f88c08af00a30c1d8bbc61eee9dd3dc0d0 
+  // from ethscan.io
+  ifstream blob1_file("blob1.txt");
+  stringstream blob1_buffer;
+  blob1_buffer << blob1_file.rdbuf();
+  vector<uint8_t> blob1_bytes = from_hex(blob1_buffer.str());
+  
+  int zero_pad = MAX_CHUNK_BYTES - (blob1_bytes.size() % MAX_CHUNK_BYTES);
+  for (int i = 0; i < zero_pad; i++)
+    blob1_bytes.push_back(0);
+  
+  kzg::blob blob = kzg::blob::from_bytes(blob1_bytes.data(), 0, blob1_bytes.size(), MAX_CHUNK_BYTES);
+  kzg::poly poly = kzg::poly::from_blob(blob);
+  kzg::commit commit = kzg.create_commit(poly);
+  check_test(kzg.verify_commit(commit, poly), "eth-blob, commit verification for blob1");
+  
+  int verify_chunks = 4;
+  int rand_offset = rand() % (blob1_bytes.size() / MAX_CHUNK_BYTES - verify_chunks);
+  int bytes_offset = rand_offset * MAX_CHUNK_BYTES;
+  kzg::proof proof = kzg.create_proof(poly, rand_offset, verify_chunks);
+  kzg::blob verify = kzg::blob::from_bytes(&blob1_bytes.data()[bytes_offset], bytes_offset, verify_chunks * MAX_CHUNK_BYTES, MAX_CHUNK_BYTES);
+  check_test(kzg.verify_proof(commit, proof, verify), "eth-blob, proof verification for blob1");
+  
+  // commit and generate proof for blob from eth transaction
+  // transaction hash: 0x9e3de317d97616d3bd2e714e467a14f88c08af00a30c1d8bbc61eee9dd3dc0d0
+  // from ethscan.io
+  ifstream blob2_file("blob2.txt");
+  stringstream blob2_buffer;
+  blob2_buffer << blob2_file.rdbuf();
+  vector<uint8_t> blob2_bytes = from_hex(blob2_buffer.str());
+  
+  zero_pad = MAX_CHUNK_BYTES - (blob2_bytes.size() % MAX_CHUNK_BYTES);
+  for (int i = 0; i < zero_pad; i++)
+    blob2_bytes.push_back(0);
+  
+  blob = kzg::blob::from_bytes(blob2_bytes.data(), 0, blob2_bytes.size(), MAX_CHUNK_BYTES);
+  poly = kzg::poly::from_blob(blob);
+  commit = kzg.create_commit(poly);
+  check_test(kzg.verify_commit(commit, poly), "eth-blob, commit verification for blob2");
+  
+  rand_offset = rand() % (blob2_bytes.size() / MAX_CHUNK_BYTES - verify_chunks);
+  bytes_offset = rand_offset * MAX_CHUNK_BYTES;
+  proof = kzg.create_proof(poly, rand_offset, verify_chunks);
+  verify = kzg::blob::from_bytes(&blob2_bytes.data()[bytes_offset], bytes_offset, verify_chunks * MAX_CHUNK_BYTES, MAX_CHUNK_BYTES);
+  check_test(kzg.verify_proof(commit, proof, verify), "eth-blob, proof verification for blob2");
 }
 
 void example_test() {
@@ -345,6 +401,15 @@ void generate_expected_test_data(
       to_refute.push_back(make_tuple(j, k, str_to_refute));
     }
   }
+}
+
+vector<uint8_t> from_hex(string s) {
+  vector<uint8_t> res;
+  for (int i = 0; i < s.size(); i += 2) {
+    string hex_byte = s.substr(i, 2);
+    res.push_back(strtol(hex_byte.c_str(), NULL, 16));
+  }
+  return res;
 }
 
 // from https://gist.github.com/Kielx/2917687bc30f567d45e15a4577772b02
